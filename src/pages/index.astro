@@ -19,6 +19,7 @@ const sections = timeline.sections as (TextSection | MonthSection)[];
 const intro = sections[0] as TextSection;
 const rest = sections.slice(1);
 const months = rest.filter((s): s is MonthSection => s.type === 'month').map((s) => s.month);
+const counts = Object.fromEntries((rest.filter((s) => s.type === 'month') as MonthSection[]).map((s) => [s.month, s.entries.reduce((n, e) => n + e.tools.length, 0)]));
 const firstMonth = rest.findIndex((s) => s.type === 'month');
 const lastMonth = rest.length - 1 - [...rest].reverse().findIndex((s) => s.type === 'month');
 const before = rest.slice(0, firstMonth);
@@ -41,16 +42,13 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     <meta property="og:title" content={timeline.title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="article" />
-    <meta name="theme-color" content="#f3f4f6" />
+    <meta name="theme-color" content="#ffffff" />
   </head>
   <body>
-    <MonthBar months={months} />
+    <MonthBar months={months} counts={counts} />
 
     <header class="hero">
       <p class="hero__year" aria-hidden="true">2026</p>
-      <div class="hero__stripe" aria-hidden="true">
-        {[4, 5, 6, 7, 8, 9, 10, 11].map((m) => <span data-month={m} class={months.includes(m) ? '' : 'is-empty'} />)}
-      </div>
       <h1 class="hero__title">{timeline.title}</h1>
       <div class="hero__body">{intro.paragraphs.map((p) => <p>{p}</p>)}</div>
       {intro.hasImage && <div class="cover-shot"><Shot id="tana-overview" alt="つくったもの棚の画面" variant="full" /></div>}
@@ -69,8 +67,8 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
           <h2 class="tl-month__head" id={`mh${s.month}`}>
             <span class="tl-month__num">{s.month}</span><span class="tl-month__unit">月</span>
           </h2>
-          {s.entries.map((e) => (
-            <TimelineItem {...e} tools={e.tools.map((id) => extras.get(id)!)} side={side()} />
+          {s.entries.map((e, i) => (
+            <TimelineItem {...e} tools={e.tools.map((id) => extras.get(id)!)} side={side()} first={i === 0} />
           ))}
         </section>
       ))}

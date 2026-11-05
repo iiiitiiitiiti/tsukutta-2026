@@ -1,9 +1,10 @@
 ---
-// 上に固定する月の色帯。読んでいる月の帯が太くなり、作ったものが無い月は灰色で残す
+// 上に固定する月の色帯。読んでいる月の帯が太くなり、作ったものが無い月は灰色で残す。月の名前の横にその月に作った数を出す
 interface Props {
   months: number[];
+  counts: Record<number, number>;
 }
-const { months } = Astro.props;
+const { months, counts } = Astro.props;
 const all = [4, 5, 6, 7, 8, 9, 10, 11];
 ---
 <nav class="bar" aria-label="月ごとに移動">
@@ -13,7 +14,7 @@ const all = [4, 5, 6, 7, 8, 9, 10, 11];
         <li class="bar__item" data-month={m}>
           <a class="bar__link" href={`#m${m}`} data-bar={m}>
             <span class="bar__seg"></span>
-            <span class="bar__label">{m}月</span>
+            <span class="bar__label">{m}月<span class="bar__count">{counts[m]}<span class="sr-only">件</span></span></span>
           </a>
         </li>
       ) : (
@@ -34,7 +35,7 @@ const all = [4, 5, 6, 7, 8, 9, 10, 11];
     top: 0;
     z-index: 20;
     padding: 10px 20px 6px;
-    background: rgb(243 244 246 / 0.92);
+    background: rgb(255 255 255 / 0.92);
     backdrop-filter: blur(8px);
   }
 
@@ -78,6 +79,13 @@ const all = [4, 5, 6, 7, 8, 9, 10, 11];
     line-height: 1.2;
     text-align: center;
     transition: color 300ms;
+  }
+
+  .bar__count {
+    margin-left: 4px;
+    color: var(--ink-soft);
+    font-weight: 400;
+    opacity: 0.7;
   }
 
   .is-empty .bar__label {

@@ -1,5 +1,6 @@
 ---
 // 年表の1項目。線の上の丸から点線を伸ばし、左右どちらかに日付・名前・一言を置く。
+// 日付は月の最初の項目だけ「9.05」と大きく出し、同じ月の2件目からは日だけを小さく出す（月は札と線の色で分かるため）。
 // 「くわしく読む」を押すと、原稿の全文・さわれる実物・大きなスクショが開く
 import Shot from './Shot.astro';
 import Counter from './Counter.astro';
@@ -14,17 +15,18 @@ interface Props {
   paragraphs: string[];
   tools: Extra[];
   side: 'left' | 'right';
+  first: boolean;
 }
-const { month, day, title, paragraphs, tools, side } = Astro.props;
+const { month, day, title, paragraphs, tools, side, first } = Astro.props;
 const single = tools.length === 1 ? tools[0] : null;
 const counters = tools.filter((t) => t.counter);
 const demos = tools.filter((t) => t.demo);
 const shots = tools.filter((t) => !t.noShot);
 ---
-<article class="item" data-side={side}>
+<article class="item" data-side={side} data-first={first}>
   <span class="item__node" aria-hidden="true"></span>
   <div class="item__card">
-    <p class="item__date"><span class="item__m">{month}</span><span class="item__dot">.</span><span class="item__d">{String(day).padStart(2, '0')}</span><span class="sr-only">{month}月{day}日</span></p>
+    <p class="item__date"><span aria-hidden="true">{first && <><span class="item__m">{month}</span><span class="item__dot">.</span></>}<span class="item__d">{String(day).padStart(2, '0')}</span></span><span class="sr-only">{month}月{day}日</span></p>
 
     {single ? (
       <div class="item__head">
@@ -120,6 +122,19 @@ const shots = tools.filter((t) => !t.noShot);
     padding: 0 2px;
   }
 
+  .item:not([data-first='true']) .item__d {
+    font-size: 28px;
+  }
+
+  /* 小さい日付の高さに、線の上の丸と点線を合わせる */
+  .item:not([data-first='true']) .item__node {
+    top: 4px;
+  }
+
+  .item:not([data-first='true']) .item__card::before {
+    top: 13px;
+  }
+
   .item__head {
     display: flex;
     align-items: center;
@@ -178,22 +193,20 @@ const shots = tools.filter((t) => !t.noShot);
   }
 
   .item__more {
-    margin-top: 16px;
+    margin-top: 8px;
   }
 
   .item__summary {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 16px;
-    border: 1.5px solid var(--ci);
-    border-radius: 999px;
-    color: var(--ci);
+    min-height: 44px;
+    color: var(--ink-soft);
     font-size: 14px;
     font-weight: 700;
     list-style: none;
     cursor: pointer;
-    transition: background-color 200ms, color 200ms;
+    transition: color 200ms;
   }
 
   .item__summary::-webkit-details-marker {
@@ -211,9 +224,9 @@ const shots = tools.filter((t) => !t.noShot);
     transition: rotate 250ms, translate 250ms;
   }
 
-  .item__summary:hover {
-    background: var(--ci);
-    color: #fff;
+  .item__summary:hover,
+  .item__more[open] .item__summary {
+    color: var(--ci);
   }
 
   .item__more[open] .item__summary::after {
@@ -306,7 +319,7 @@ const shots = tools.filter((t) => !t.noShot);
 
     /* 前の項目の下半分と高さを重ね、左右が互い違いに並んで見えるようにする */
     .item + .item {
-      margin-top: -150px;
+      margin-top: -120px;
     }
 
     .item__head {
@@ -320,6 +333,18 @@ const shots = tools.filter((t) => !t.noShot);
 
     .item__dot {
       font-size: 48px;
+    }
+
+    .item:not([data-first='true']) .item__d {
+      font-size: 36px;
+    }
+
+    .item:not([data-first='true']) .item__node {
+      top: 8px;
+    }
+
+    .item:not([data-first='true']) .item__card::before {
+      top: 17px;
     }
   }
 </style>

@@ -39,8 +39,19 @@ const src = `${base}/shots/${id}`;
     aspect-ratio: 1;
     overflow: hidden;
     border-radius: 50%;
-    background: var(--c);
-    color: var(--on-c);
+    position: relative;
+    background: var(--surface);
+    color: var(--ci);
+  }
+
+  /* 細い輪。写真が入っても同じ輪が上に重なる */
+  .thumb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px var(--rule);
+    pointer-events: none;
   }
 
   .thumb img {

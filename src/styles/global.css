@@ -1,5 +1,5 @@
 :root {
-  --bg: #f3f4f6;
+  --bg: #ffffff;
   --surface: #ffffff;
   --ink: #1c2433;
   --ink-soft: #5b6475;
@@ -89,26 +89,8 @@ p + p {
   letter-spacing: -0.01em;
 }
 
-/* 2026 の下に、4月から11月までの色を並べた細い帯 */
-.hero__stripe {
-  display: flex;
-  gap: 4px;
-  width: min(100%, 420px);
-  height: 8px;
-  margin: 20px 0 28px;
-}
-
-.hero__stripe span {
-  flex: 1;
-  background: var(--c);
-}
-
-.hero__stripe .is-empty {
-  background: var(--empty);
-}
-
 .hero__title {
-  margin: 0 0 28px;
+  margin: 28px 0 28px;
   font-size: clamp(24px, 4.4vw, 34px);
   font-weight: 700;
   line-height: 1.5;
