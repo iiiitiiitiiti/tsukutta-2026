@@ -8,6 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "check:contrast": "node scripts/check-contrast.mjs",
     "import": "node scripts/import-text.mjs",
     "astro": "astro"
   },

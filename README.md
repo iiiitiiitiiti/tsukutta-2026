@@ -36,3 +36,15 @@ npm run dev      # http://localhost:4321/tsukutta-2026/
 npm run check
 npm run build
 ```
+
+## アクセシビリティの検査
+
+文字は WCAG 2.2 の AA（文字と背景の差4.5:1以上）に合わせている（[docs/decisions/003](docs/decisions/003_wcag-aa-contrast.md)）。色や文字の大きさを変えたら、build したものを preview で動かして検査する。Chrome が要る。
+
+```sh
+npx astro preview                                  # http://localhost:4321/tsukutta-2026/
+npm run check:contrast                             # 別のターミナルで
+npm run check:contrast -- <URL>                    # 別のポートで動かしているとき
+```
+
+「くわしく読む」をすべて開いた状態で、幅1280・375・320px の文字の差・押す所の大きさ（24px 以上）・横のはみ出しを数える。Lighthouse は閉じた全文の中を見ないので、こちらで補う。
