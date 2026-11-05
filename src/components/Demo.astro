@@ -1,0 +1,36 @@
+---
+// 各ツールの小さな実物。extras.json の demo の値で出し分ける
+import Scoreboard from './demos/Scoreboard.astro';
+import Flashcards from './demos/Flashcards.astro';
+import Kaimono from './demos/Kaimono.astro';
+
+interface Props {
+  kind: string;
+}
+const { kind } = Astro.props;
+const demos: Record<string, any> = { scoreboard: Scoreboard, flashcards: Flashcards, kaimono: Kaimono };
+const Component = demos[kind];
+---
+{Component && (
+  <div class="demo">
+    <p class="demo__label">さわってみる</p>
+    <Component />
+  </div>
+)}
+
+<style>
+  .demo {
+    padding: 16px;
+    border: 1.5px dashed var(--stamp);
+    border-radius: 6px;
+    background: rgb(255 255 255 / 0.6);
+  }
+
+  .demo__label {
+    margin: 0 0 12px;
+    color: var(--stamp);
+    font-family: var(--hand);
+    font-size: 15px;
+    font-weight: 600;
+  }
+</style>

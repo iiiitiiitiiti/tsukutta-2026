@@ -1,0 +1,24 @@
+{
+  "name": "tsukutta-2026",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "import": "node scripts/import-text.mjs",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@fontsource/klee-one": "^5.3.1",
+    "@fontsource/zen-kaku-gothic-new": "^5.3.1",
+    "astro": "^7.4.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^26.6.6",
+    "typescript": "^5.9.3"
+  }
+}

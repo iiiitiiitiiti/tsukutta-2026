@@ -1,0 +1,20 @@
+[
+  { "id": "quiz-score-board", "match": "クイズ得点板", "demo": "scoreboard" },
+  { "id": "zoo-aquarium-log", "match": "動物園・水族館ログ", "counter": { "value": "473", "unit": "施設" } },
+  { "id": "flashcards", "match": "暗記カード", "counter": { "value": "29,961", "unit": "枚" }, "demo": "flashcards" },
+  { "id": "disney-archive", "match": "disney-archive", "counter": { "value": "1,321", "unit": "回" } },
+  { "id": "quiz-atlas", "match": "QUIZ ATLAS" },
+  { "id": "gakki-plan", "match": "楽器のはじめかた" },
+  { "id": "ao-hawaii", "match": "Aʻo Hawaiʻi" },
+  { "id": "gaman-log", "match": "がまんログ" },
+  { "id": "sakumon-review", "match": "作問レビュー", "counter": { "value": "5,560", "unit": "語" } },
+  { "id": "toiyomi", "match": "問い読み" },
+  { "id": "worklog", "match": "Worklog", "noShot": true },
+  { "id": "hitotsume", "match": "ひとつめ" },
+  { "id": "ugoki", "match": "うごき帳", "counter": { "value": "21", "unit": "作" } },
+  { "id": "mondaishu-prep", "match": "問題集の下ごしらえ" },
+  { "id": "ikimono-techo", "match": "いきもの手帳", "counter": { "value": "168", "unit": "種" } },
+  { "id": "tsukutta-tana", "match": "つくったもの棚" },
+  { "id": "visual-quiz-slides", "match": "ビジュアルクイズのスライド" },
+  { "id": "kaimono", "match": "かいもの", "demo": "kaimono" }
+]

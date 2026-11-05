@@ -1,0 +1,148 @@
+---
+// 見えたら桁ごとに回って、左の桁から止まる数字。うごき帳「数字が回って止まる実績表示」と同じ作り
+interface Props {
+  value: string;
+  unit: string;
+  label: string;
+}
+const { value, unit, label } = Astro.props;
+---
+<p class="counter">
+  <span class="counter__value" data-roll>{value}</span><span class="counter__unit">{unit}</span>
+  <span class="counter__label">{label}</span>
+</p>
+
+<style>
+  .counter {
+    --duration: 1400ms;
+    --stagger: 160ms;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    margin: 0;
+    padding: 4px 0 12px;
+    border-bottom: 1px dashed var(--rule);
+  }
+
+  .counter__value {
+    display: inline-flex;
+    color: var(--stamp);
+    font-family: var(--hand);
+    font-size: 48px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+  }
+
+  .counter__unit {
+    font-family: var(--hand);
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .counter__label {
+    flex-basis: 100%;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+
+  /* 1桁ぶんの窓。中の帯（0〜9 を2周）を縦に動かす */
+  .counter :global(.counter__digit) {
+    overflow: hidden;
+    height: 1.15em;
+  }
+
+  .counter :global(.counter__reel) {
+    display: block;
+  }
+
+  .counter :global(.counter__reel > span) {
+    display: block;
+    height: 1.15em;
+    text-align: center;
+  }
+
+  .counter :global(.counter__sr) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  const toMs = (v: string) => (v.trim().endsWith('ms') ? parseFloat(v) : parseFloat(v) * 1000);
+
+  // 「29,961」を桁ごとの帯に組み替える。JS が動かなければ数字はそのまま見える
+  function build(value: HTMLElement) {
+    const text = value.textContent?.trim() ?? '';
+    const reels: { reel: HTMLElement; target: number; index: number }[] = [];
+    value.textContent = '';
+    for (const ch of text) {
+      if (!/\d/.test(ch)) {
+        const mark = document.createElement('span');
+        mark.textContent = ch;
+        mark.setAttribute('aria-hidden', 'true');
+        value.append(mark);
+        continue;
+      }
+      const digit = document.createElement('span');
+      digit.className = 'counter__digit';
+      digit.setAttribute('aria-hidden', 'true');
+      const reel = document.createElement('span');
+      reel.className = 'counter__reel';
+      for (let i = 0; i < 20; i += 1) {
+        const n = document.createElement('span');
+        n.textContent = String(i % 10);
+        reel.append(n);
+      }
+      digit.append(reel);
+      value.append(digit);
+      reels.push({ reel, target: Number(ch), index: reels.length });
+    }
+    const sr = document.createElement('span');
+    sr.className = 'counter__sr';
+    sr.textContent = text;
+    value.append(sr);
+    return reels;
+  }
+
+  document.querySelectorAll<HTMLElement>('.counter').forEach((root) => {
+    const style = getComputedStyle(root);
+    const duration = toMs(style.getPropertyValue('--duration'));
+    const stagger = toMs(style.getPropertyValue('--stagger'));
+    const easing = style.getPropertyValue('--ease').trim();
+    const reels = build(root.querySelector<HTMLElement>('[data-roll]')!);
+    let animations: Animation[] = [];
+
+    const play = () => {
+      animations = reels.map(({ reel, target, index }) =>
+        reel.animate([{ translate: '0 0' }, { translate: `0 ${-(10 + target) * 5}%` }], {
+          duration: duration + index * stagger,
+          easing,
+          fill: 'forwards',
+        }),
+      );
+    };
+    // 帯の止まる位置: 20個並べた帯の (10 + 目当て) 番目。1個は帯の高さの5%
+    const reset = () => {
+      animations.forEach((a) => a.cancel());
+      animations = [];
+    };
+
+    new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.intersectionRatio >= 0.6 && animations.length === 0) play();
+          if (e.intersectionRatio < 0.01) reset();
+        }
+      },
+      { threshold: [0, 0.01, 0.6] },
+    ).observe(root);
+  });
+</script>

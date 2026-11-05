@@ -1,0 +1,208 @@
+---
+// 得点板の小さな実物。3問正解で勝ち抜け、2回間違えると失格
+const players = ['Aさん', 'Bさん', 'Cさん'];
+---
+<div class="sb" data-sb>
+  <p class="sb__rule">3問正解で勝ち抜け、2回間違えると失格</p>
+  <ul class="sb__list">
+    {players.map((name) => (
+      <li class="sb__row" data-row>
+        <span class="sb__name">{name}</span>
+        <span class="sb__marks" aria-hidden="true">
+          <span class="sb__o" data-o></span><span class="sb__x" data-x></span>
+        </span>
+        <span class="sb__state" data-state aria-live="polite"></span>
+        <span class="sb__buttons">
+          <button type="button" class="sb__btn sb__btn--o" data-hit="o" aria-label={`${name}の正解`}>○</button>
+          <button type="button" class="sb__btn sb__btn--x" data-hit="x" aria-label={`${name}の誤答`}>×</button>
+        </span>
+      </li>
+    ))}
+  </ul>
+  <button type="button" class="sb__reset" data-reset>最初から</button>
+  <div class="sb__confetti" data-confetti aria-hidden="true"></div>
+</div>
+
+<style>
+  .sb {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sb__rule {
+    margin: 0 0 12px;
+    font-size: 14px;
+  }
+
+  .sb__list {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 12px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .sb__row {
+    display: grid;
+    grid-template-columns: 4.5em 1fr auto;
+    grid-template-areas: 'name marks buttons' 'name state buttons';
+    align-items: center;
+    gap: 0 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px var(--rule);
+    transition: background-color 300ms, opacity 300ms;
+  }
+
+  .sb__row[data-done='win'] {
+    background: #fff4c9;
+  }
+
+  .sb__row[data-done='out'] {
+    opacity: 0.55;
+  }
+
+  .sb__name {
+    grid-area: name;
+    font-weight: 700;
+  }
+
+  .sb__marks {
+    grid-area: marks;
+    font-family: var(--hand);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    line-height: 1.3;
+  }
+
+  .sb__o {
+    color: #c23b3b;
+  }
+
+  .sb__x {
+    color: #3a5fb0;
+  }
+
+  .sb__state {
+    grid-area: state;
+    min-height: 1.4em;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .sb__buttons {
+    grid-area: buttons;
+    display: flex;
+    gap: 6px;
+  }
+
+  .sb__btn {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .sb__btn:disabled {
+    cursor: default;
+    opacity: 0.35;
+  }
+
+  .sb__btn--o {
+    background: #c23b3b;
+  }
+
+  .sb__btn--x {
+    background: #3a5fb0;
+  }
+
+  .sb__btn:not(:disabled):active {
+    scale: 0.92;
+  }
+
+  .sb__reset {
+    padding: 8px 16px;
+    border: 1px solid var(--ink-soft);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .sb__confetti {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .sb__confetti :global(i) {
+    position: absolute;
+    top: -12px;
+    width: 8px;
+    height: 12px;
+  }
+</style>
+
+<script>
+  const colors = ['#c23b3b', '#e6b422', '#3a5fb0', '#5f9b6b', '#b0569e'];
+
+  document.querySelectorAll<HTMLElement>('[data-sb]').forEach((root) => {
+    const confetti = root.querySelector<HTMLElement>('[data-confetti]')!;
+    const rows = [...root.querySelectorAll<HTMLElement>('[data-row]')].map((row) => ({ row, o: 0, x: 0 }));
+
+    const burst = () => {
+      for (let i = 0; i < 40; i += 1) {
+        const p = document.createElement('i');
+        p.style.left = `${Math.random() * 100}%`;
+        p.style.background = colors[i % colors.length];
+        confetti.append(p);
+        const fall = root.offsetHeight + 24;
+        const drift = (Math.random() - 0.5) * 120;
+        p.animate(
+          [
+            { transform: 'translate(0, 0) rotate(0deg)' },
+            { transform: `translate(${drift}px, ${fall}px) rotate(${360 + Math.random() * 360}deg)` },
+          ],
+          { duration: 1400 + Math.random() * 900, easing: 'cubic-bezier(0.3, 0.6, 0.6, 1)', delay: Math.random() * 200 },
+        ).onfinish = () => p.remove();
+      }
+    };
+
+    const render = (s: (typeof rows)[number]) => {
+      s.row.querySelector('[data-o]')!.textContent = '○'.repeat(s.o);
+      s.row.querySelector('[data-x]')!.textContent = '×'.repeat(s.x);
+      const done = s.o >= 3 ? 'win' : s.x >= 2 ? 'out' : '';
+      s.row.dataset.done = done;
+      s.row.querySelector('[data-state]')!.textContent = done === 'win' ? '勝ち抜け' : done === 'out' ? '失格' : '';
+      s.row.querySelectorAll<HTMLButtonElement>('button').forEach((b) => (b.disabled = done !== ''));
+    };
+
+    rows.forEach((s) => {
+      s.row.querySelectorAll<HTMLButtonElement>('[data-hit]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          if (btn.dataset.hit === 'o') s.o += 1;
+          else s.x += 1;
+          render(s);
+          if (s.o === 3) burst();
+        }),
+      );
+    });
+
+    root.querySelector('[data-reset]')!.addEventListener('click', () => {
+      rows.forEach((s) => {
+        s.o = 0;
+        s.x = 0;
+        render(s);
+      });
+    });
+  });
+</script>

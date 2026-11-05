@@ -1,0 +1,109 @@
+---
+// かいものの小さな実物。チェックすると購入済みへ移り、押し直すと戻る
+const shops = [
+  { name: 'スーパー', items: ['牛乳', 'たまご', '食パン'] },
+  { name: 'ドラッグストア', items: ['歯みがき粉', 'ティッシュ'] },
+];
+---
+<div class="km" data-km>
+  {shops.map((shop) => (
+    <section class="km__shop">
+      <h4 class="km__shop-name">{shop.name}</h4>
+      <ul class="km__list" data-list>
+        {shop.items.map((item) => (
+          <li class="km__item" data-item data-shop={shop.name}>
+            <label class="km__label">
+              <input type="checkbox" class="km__check" />
+              <span>{item}</span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+  <section class="km__shop km__shop--done">
+    <h4 class="km__shop-name">購入済み <span data-done-count>0</span>件</h4>
+    <ul class="km__list" data-done></ul>
+  </section>
+</div>
+
+<style>
+  .km {
+    display: grid;
+    gap: 12px;
+  }
+
+  .km__shop-name {
+    margin: 0 0 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+
+  .km__list {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .km__item {
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: inset 0 0 0 1px var(--rule);
+  }
+
+  .km__label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 0 12px;
+    cursor: pointer;
+  }
+
+  .km__check {
+    width: 20px;
+    height: 20px;
+    accent-color: #2e7d5b;
+  }
+
+  .km__shop--done .km__item {
+    background: transparent;
+    color: var(--ink-soft);
+    text-decoration: line-through;
+  }
+
+  .km__shop--done .km__list:empty {
+    min-height: 44px;
+    border: 1px dashed var(--rule);
+    border-radius: 6px;
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-km]').forEach((root) => {
+    const done = root.querySelector<HTMLElement>('[data-done]')!;
+    const count = root.querySelector('[data-done-count]')!;
+    const lists = new Map<string, HTMLElement>();
+    root.querySelectorAll<HTMLElement>('[data-item]').forEach((item) => lists.set(item.dataset.shop!, item.parentElement!));
+
+    // 移す前後の位置の差を、移したあとに戻して動かす（どこへ行ったか目で追えるように）
+    const move = (item: HTMLElement, to: HTMLElement) => {
+      const before = item.getBoundingClientRect();
+      to.append(item);
+      const after = item.getBoundingClientRect();
+      item.animate(
+        [{ transform: `translate(${before.left - after.left}px, ${before.top - after.top}px)` }, { transform: 'none' }],
+        { duration: 420, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
+      );
+      count.textContent = String(done.children.length);
+    };
+
+    root.querySelectorAll<HTMLElement>('[data-item]').forEach((item) => {
+      const box = item.querySelector<HTMLInputElement>('input')!;
+      box.addEventListener('change', () => move(item, box.checked ? done : lists.get(item.dataset.shop!)!));
+    });
+  });
+</script>

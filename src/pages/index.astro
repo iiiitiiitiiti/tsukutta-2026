@@ -1,0 +1,94 @@
+---
+import '@fontsource/klee-one/600.css';
+import '@fontsource/zen-kaku-gothic-new/400.css';
+import '@fontsource/zen-kaku-gothic-new/700.css';
+import '../styles/global.css';
+import timeline from '../data/timeline.json';
+import extrasList from '../data/extras.json';
+import MonthTabs from '../components/MonthTabs.astro';
+import Shot from '../components/Shot.astro';
+import Counter from '../components/Counter.astro';
+import Demo from '../components/Demo.astro';
+
+type Extra = { id: string; match: string; counter?: { value: string; unit: string }; demo?: string; noShot?: boolean };
+type Entry = { date: string; month: number; day: number; title: string; paragraphs: string[]; hasImage: boolean; tools: string[] };
+type TextSection = { type: 'text'; heading: string; paragraphs: string[]; hasImage: boolean };
+type MonthSection = { type: 'month'; heading: string; month: number; entries: Entry[] };
+
+const extras = new Map((extrasList as Extra[]).map((x) => [x.id, x]));
+const sections = timeline.sections as (TextSection | MonthSection)[];
+const intro = sections[0] as TextSection;
+const rest = sections.slice(1);
+const months = rest.filter((s): s is MonthSection => s.type === 'month').map((s) => s.month);
+
+// テープの色はカードごとに順に替える
+const tapes = ['rgb(172 205 190 / 0.75)', 'rgb(240 214 140 / 0.75)', 'rgb(232 182 190 / 0.7)', 'rgb(176 196 228 / 0.75)'];
+let n = 0;
+const nextTape = () => {
+  const i = n++;
+  return `--tape: ${tapes[i % tapes.length]}; --tape-tilt: ${i % 2 ? 2 : -2}deg`;
+};
+const description = 'Webデザイナーが今年AIに頼んで作ったアプリやページ18件を、作った日の順に並べた年表。';
+---
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{timeline.title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={timeline.title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="article" />
+    <meta name="theme-color" content="#eef5e8" />
+  </head>
+  <body>
+    <MonthTabs months={months} />
+    <main class="page">
+      <header class="cover">
+        <p class="cover__year">2026年の手帳から</p>
+        <h1 class="cover__title">{timeline.title}</h1>
+        <div class="prose">
+          {intro.paragraphs.map((p) => <p>{p}</p>)}
+        </div>
+        {intro.hasImage && <div class="card__extras"><Shot id="tana-overview" alt="つくったもの棚の画面" tilt={-1} /></div>}
+      </header>
+
+      {rest.map((s) =>
+        s.type === 'text' ? (
+          <section class="note">
+            <h2 class="note__head">{s.heading}</h2>
+            <div class="prose">{s.paragraphs.map((p) => <p>{p}</p>)}</div>
+          </section>
+        ) : (
+          <section class="month" id={`m${s.month}`} data-month={s.month} aria-labelledby={`mh${s.month}`}>
+            <h2 class="month__head" id={`mh${s.month}`}>
+              <span class="month__num">{s.month}</span><span class="month__unit">月</span>
+            </h2>
+            {s.entries.map((e) => (
+              <article class="entry">
+                <div class="entry__date"><span class="stamp">{e.date}</span></div>
+                <div class="card" style={nextTape()}>
+                  <h3 class="card__title">{e.title}</h3>
+                  <div class="prose">{e.paragraphs.map((p) => <p>{p}</p>)}</div>
+                  <div class="card__extras">
+                    {e.tools.map((id, i) => {
+                      const x = extras.get(id)!;
+                      return (
+                        <>
+                          {x.counter && <Counter value={x.counter.value} unit={x.counter.unit} label={x.match} />}
+                          {x.demo && <Demo kind={x.demo} />}
+                          {!x.noShot && <Shot id={id} alt={`${x.match}の画面`} tilt={i % 2 ? -1 : 1} />}
+                        </>
+                      );
+                    })}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </section>
+        ),
+      )}
+    </main>
+  </body>
+</html>
