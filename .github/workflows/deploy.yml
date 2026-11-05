@@ -30,7 +30,7 @@ jobs:
         with:
           path: dist
 
-  # 無料の契約では private のリポから Pages を出せない。公開日に public へ切り替えるまでは build だけ通す
+  # 無料の契約では private のリポから Pages を出せない。private に戻したときは build だけ通す
   deploy:
     if: ${{ !github.event.repository.private }}
     needs: build
