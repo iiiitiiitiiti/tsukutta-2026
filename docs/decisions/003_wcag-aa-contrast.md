@@ -1,5 +1,7 @@
 ## 003. 文字はすべて WCAG 2.2 の AA に合わせ、帯の上の文字を全部の月で白にそろえる
 
+> 帯の色と白文字は 004 でライトトーン＋黒文字に変えた。AA に合わせる決まりはこのまま残る。
+
 - 日付: 2026-11-05
 - 対象: `src/styles/global.css`・`src/pages/index.astro`・`src/components/TimelineItem.astro`・`Counter.astro`・`MonthBar.astro`・`demos/Scoreboard.astro`・`demos/Flashcards.astro`
 

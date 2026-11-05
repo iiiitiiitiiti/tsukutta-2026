@@ -10,7 +10,7 @@
      文字はどれも背景との差を4.5:1以上にする（WCAG AA）。帯の上の文字に opacity をかけると差が縮むので使わない */
   --c: var(--ink);
   --ci: var(--ink);
-  --on-c: #fff;
+  --on-c: var(--ink);
 
   --num: 'Oswald', 'Arial Narrow', sans-serif;
   --body: 'Noto Sans JP Variable', 'Noto Sans JP', sans-serif;
@@ -18,12 +18,13 @@
   color-scheme: light;
 }
 
-[data-month='4'] { --c: #bf4518; --ci: #bf4518; }
-[data-month='7'] { --c: #3d7a65; --ci: #3d7a65; }
-[data-month='8'] { --c: #946600; --ci: #946600; }
-[data-month='9'] { --c: #136170; --ci: #136170; }
-[data-month='10'] { --c: #2f4b8f; --ci: #2f4b8f; }
-[data-month='11'] { --c: #3c3f45; --ci: #3c3f45; }
+/* 帯はライトトーンにして、上の文字は全部の月で黒にする */
+[data-month='4'] { --c: #f7a985; --ci: #bf4518; }
+[data-month='7'] { --c: #a9d39b; --ci: #3d7a65; }
+[data-month='8'] { --c: #f6cf5c; --ci: #946600; }
+[data-month='9'] { --c: #86cdc6; --ci: #136170; }
+[data-month='10'] { --c: #a7b8ec; --ci: #2f4b8f; }
+[data-month='11'] { --c: #c3c5cc; --ci: #3c3f45; }
 
 *,
 *::before,
