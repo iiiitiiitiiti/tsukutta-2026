@@ -77,7 +77,7 @@ p + p {
 
 /* 表紙。年表と同じく中央にそろえる */
 .hero {
-  width: min(100% - 40px, 960px);
+  width: min(100% - 40px, 1200px);
   margin: 0 auto;
   padding: 88px 0 72px;
   text-align: center;
