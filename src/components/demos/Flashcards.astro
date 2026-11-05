@@ -10,7 +10,7 @@ const cards = [
   <div class="fc__stage">
     <button type="button" class="fc__card" data-card aria-describedby="fc-hint">
       <span class="fc__face fc__face--q"><span class="fc__tag">Q</span><span data-q>{cards[0].q}</span></span>
-      <span class="fc__face fc__face--a"><span class="fc__tag">A</span><span data-a>{cards[0].a}</span></span>
+      <span class="fc__face fc__face--a" aria-hidden="true"><span class="fc__tag">A</span><span data-a>{cards[0].a}</span></span>
     </button>
   </div>
   <p class="fc__hint" id="fc-hint">カードを押すと答えが出ます</p>
@@ -123,9 +123,16 @@ const cards = [
     let i = 0;
     card.setAttribute('aria-pressed', 'false');
 
-    card.addEventListener('click', () => {
-      card.setAttribute('aria-pressed', String(card.getAttribute('aria-pressed') !== 'true'));
-    });
+    // 読み上げでは見えている面だけを読む（裏の答えが先に読まれないように）
+    const faceQ = card.querySelector<HTMLElement>('.fc__face--q')!;
+    const faceA = card.querySelector<HTMLElement>('.fc__face--a')!;
+    const flip = (on: boolean) => {
+      card.setAttribute('aria-pressed', String(on));
+      faceQ.setAttribute('aria-hidden', String(on));
+      faceA.setAttribute('aria-hidden', String(!on));
+    };
+
+    card.addEventListener('click', () => flip(card.getAttribute('aria-pressed') !== 'true'));
 
     root.querySelector('[data-next]')!.addEventListener('click', () => {
       const flipped = card.getAttribute('aria-pressed') === 'true';
@@ -137,7 +144,7 @@ const cards = [
       };
       // 答えが出たままなら、表に戻ってから中身を替える（裏の答えが先に見えないように）
       if (flipped) {
-        card.setAttribute('aria-pressed', 'false');
+        flip(false);
         setTimeout(swap, 260);
       } else {
         swap();

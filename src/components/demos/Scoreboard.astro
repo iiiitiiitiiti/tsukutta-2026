@@ -11,6 +11,7 @@ const players = ['Aさん', 'Bさん', 'Cさん'];
         <span class="sb__marks" aria-hidden="true">
           <span class="sb__o" data-o></span><span class="sb__x" data-x></span>
         </span>
+        <span class="sr-only" data-score>正解0回、誤答0回</span>
         <span class="sb__state" data-state aria-live="polite"></span>
         <span class="sb__buttons">
           <button type="button" class="sb__btn sb__btn--o" data-hit="o" aria-label={`${name}の正解`}>○</button>
@@ -58,8 +59,9 @@ const players = ['Aさん', 'Bさん', 'Cさん'];
     background: #fff4c9;
   }
 
+  /* 失格の行は文字を淡い色にする（opacity だと文字の差が4.5:1を割る） */
   .sb__row[data-done='out'] {
-    opacity: 0.55;
+    color: var(--ink-soft);
   }
 
   .sb__name {
@@ -178,6 +180,7 @@ const players = ['Aさん', 'Bさん', 'Cさん'];
     const render = (s: (typeof rows)[number]) => {
       s.row.querySelector('[data-o]')!.textContent = '○'.repeat(s.o);
       s.row.querySelector('[data-x]')!.textContent = '×'.repeat(s.x);
+      s.row.querySelector('[data-score]')!.textContent = `正解${s.o}回、誤答${s.x}回`;
       const done = s.o >= 3 ? 'win' : s.x >= 2 ? 'out' : '';
       s.row.dataset.done = done;
       s.row.querySelector('[data-state]')!.textContent = done === 'win' ? '勝ち抜け' : done === 'out' ? '失格' : '';
