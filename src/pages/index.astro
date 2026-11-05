@@ -1,16 +1,16 @@
 ---
-import '@fontsource/klee-one/600.css';
+import '@fontsource/oswald/500.css';
+import '@fontsource/oswald/600.css';
 import '@fontsource/zen-kaku-gothic-new/400.css';
 import '@fontsource/zen-kaku-gothic-new/700.css';
 import '../styles/global.css';
 import timeline from '../data/timeline.json';
 import extrasList from '../data/extras.json';
-import MonthTabs from '../components/MonthTabs.astro';
+import MonthBar from '../components/MonthBar.astro';
+import TimelineItem from '../components/TimelineItem.astro';
 import Shot from '../components/Shot.astro';
-import Counter from '../components/Counter.astro';
-import Demo from '../components/Demo.astro';
 
-type Extra = { id: string; match: string; counter?: { value: string; unit: string }; demo?: string; noShot?: boolean };
+type Extra = { id: string; match: string; icon?: string; lead?: string; counter?: { value: string; unit: string }; demo?: string; noShot?: boolean };
 type Entry = { date: string; month: number; day: number; title: string; paragraphs: string[]; hasImage: boolean; tools: string[] };
 type TextSection = { type: 'text'; heading: string; paragraphs: string[]; hasImage: boolean };
 type MonthSection = { type: 'month'; heading: string; month: number; entries: Entry[] };
@@ -20,15 +20,17 @@ const sections = timeline.sections as (TextSection | MonthSection)[];
 const intro = sections[0] as TextSection;
 const rest = sections.slice(1);
 const months = rest.filter((s): s is MonthSection => s.type === 'month').map((s) => s.month);
+const firstMonth = rest.findIndex((s) => s.type === 'month');
+const lastMonth = rest.length - 1 - [...rest].reverse().findIndex((s) => s.type === 'month');
+const before = rest.slice(0, firstMonth);
+const monthSections = rest.slice(firstMonth, lastMonth + 1) as MonthSection[];
+const after = rest.slice(lastMonth + 1);
 
-// テープの色はカードごとに順に替える
-const tapes = ['rgb(172 205 190 / 0.75)', 'rgb(240 214 140 / 0.75)', 'rgb(232 182 190 / 0.7)', 'rgb(176 196 228 / 0.75)'];
-let n = 0;
-const nextTape = () => {
-  const i = n++;
-  return `--tape: ${tapes[i % tapes.length]}; --tape-tilt: ${i % 2 ? 2 : -2}deg`;
-};
-const description = 'Webデザイナーが今年AIに頼んで作ったアプリやページ18件を、作った日の順に並べた年表。';
+// 左右は全項目を通して交互にする
+let k = 0;
+const side = () => (k++ % 2 === 0 ? 'left' : 'right');
+const total = extras.size;
+const description = `Webデザイナーが今年AIに頼んで作ったアプリやページ${total}件を、作った日の順に並べた年表。`;
 ---
 <!doctype html>
 <html lang="ja">
@@ -40,55 +42,110 @@ const description = 'Webデザイナーが今年AIに頼んで作ったアプリ
     <meta property="og:title" content={timeline.title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="article" />
-    <meta name="theme-color" content="#eef5e8" />
+    <meta name="theme-color" content="#f3f4f6" />
   </head>
   <body>
-    <MonthTabs months={months} />
-    <main class="page">
-      <header class="cover">
-        <p class="cover__year">2026年の手帳から</p>
-        <h1 class="cover__title">{timeline.title}</h1>
-        <div class="prose">
-          {intro.paragraphs.map((p) => <p>{p}</p>)}
-        </div>
-        {intro.hasImage && <div class="card__extras"><Shot id="tana-overview" alt="つくったもの棚の画面" tilt={-1} /></div>}
-      </header>
+    <MonthBar months={months} />
 
-      {rest.map((s) =>
-        s.type === 'text' ? (
-          <section class="note">
-            <h2 class="note__head">{s.heading}</h2>
-            <div class="prose">{s.paragraphs.map((p) => <p>{p}</p>)}</div>
-          </section>
-        ) : (
-          <section class="month" id={`m${s.month}`} data-month={s.month} aria-labelledby={`mh${s.month}`}>
-            <h2 class="month__head" id={`mh${s.month}`}>
-              <span class="month__num">{s.month}</span><span class="month__unit">月</span>
-            </h2>
-            {s.entries.map((e) => (
-              <article class="entry">
-                <div class="entry__date"><span class="stamp">{e.date}</span></div>
-                <div class="card" style={nextTape()}>
-                  <h3 class="card__title">{e.title}</h3>
-                  <div class="prose">{e.paragraphs.map((p) => <p>{p}</p>)}</div>
-                  <div class="card__extras">
-                    {e.tools.map((id, i) => {
-                      const x = extras.get(id)!;
-                      return (
-                        <>
-                          {x.counter && <Counter value={x.counter.value} unit={x.counter.unit} label={x.match} />}
-                          {x.demo && <Demo kind={x.demo} />}
-                          {!x.noShot && <Shot id={id} alt={`${x.match}の画面`} tilt={i % 2 ? -1 : 1} />}
-                        </>
-                      );
-                    })}
-                  </div>
-                </div>
-              </article>
-            ))}
-          </section>
-        ),
-      )}
+    <header class="hero">
+      <p class="hero__year" aria-hidden="true">2026</p>
+      <div class="hero__stripe" aria-hidden="true">
+        {[4, 5, 6, 7, 8, 9, 10, 11].map((m) => <span data-month={m} class={months.includes(m) ? '' : 'is-empty'} />)}
+      </div>
+      <h1 class="hero__title">{timeline.title}</h1>
+      <div class="hero__body">{intro.paragraphs.map((p) => <p>{p}</p>)}</div>
+      {intro.hasImage && <div class="cover-shot"><Shot id="tana-overview" alt="つくったもの棚の画面" variant="full" /></div>}
+    </header>
+
+    {(before as TextSection[]).map((s) => (
+      <section class="note">
+        <h2 class="note__head">{s.heading}</h2>
+        <div class="note__body">{s.paragraphs.map((p) => <p>{p}</p>)}</div>
+      </section>
+    ))}
+
+    <main class="tl">
+      {monthSections.map((s) => (
+        <section class="tl-month" id={`m${s.month}`} data-month={s.month} aria-labelledby={`mh${s.month}`}>
+          <h2 class="tl-month__head" id={`mh${s.month}`}>
+            <span class="tl-month__num">{s.month}</span><span class="tl-month__unit">月</span>
+          </h2>
+          {s.entries.map((e) => (
+            <TimelineItem {...e} tools={e.tools.map((id) => extras.get(id)!)} side={side()} />
+          ))}
+        </section>
+      ))}
     </main>
+
+    {(after as TextSection[]).map((s) => (
+      <section class="note">
+        <h2 class="note__head">{s.heading}</h2>
+        <div class="note__body">{s.paragraphs.map((p) => <p>{p}</p>)}</div>
+      </section>
+    ))}
+    <footer class="foot"><span class="foot__end" aria-hidden="true"></span></footer>
   </body>
 </html>
+
+<style>
+  .tl {
+    width: min(100% - 40px, 1040px);
+    margin: 0 auto;
+  }
+
+  /* 月ごとに、その月の色の縦線を引く。月と月のあいだに小さな切れ目ができる */
+  .tl-month {
+    position: relative;
+    padding-top: 24px;
+  }
+
+  .tl-month::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 6px;
+    left: 22px;
+    width: 4px;
+    background: var(--c);
+  }
+
+  .tl-month__head {
+    position: relative;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+    margin: 0 0 32px;
+    padding: 4px 16px 6px;
+    border-radius: 999px;
+    background: var(--c);
+    color: var(--on-c);
+    line-height: 1;
+  }
+
+  .tl-month__num {
+    font-family: var(--num);
+    font-size: 30px;
+    font-weight: 600;
+  }
+
+  .tl-month__unit {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  @media (min-width: 900px) {
+    .tl-month::before {
+      left: calc(50% - 2px);
+    }
+
+    .tl-month__head {
+      left: 50%;
+      translate: -50% 0;
+      margin-bottom: 48px;
+    }
+  }
+
+  .foot {
+    padding: 24px 0 96px;
+  }
+</style>

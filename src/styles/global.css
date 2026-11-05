@@ -1,19 +1,28 @@
 :root {
-  /* 方眼の手帳。紙の色は読んでいる月で変わる（month-tabs.js が --tint を書き換える） */
-  --tint: #f3f6f1;
-  --grid: rgb(120 155 180 / 0.22);
-  --ink: #262b35;
-  --ink-soft: #586070;
-  --stamp: #4b4396;
-  --card: #fffffd;
-  --rule: #c9d4dc;
-  --cell: 20px;
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --ink: #1c2433;
+  --ink-soft: #5b6475;
+  --rule: #d5d9e0;
+  --empty: #e2e5ea;
 
-  --hand: 'Klee One', 'Hiragino Mincho ProN', serif;
+  /* 月の色。--c は塗り、--ci は文字に使う濃いめの色（背景との差を3:1以上にする） */
+  --c: var(--ink);
+  --ci: var(--ink);
+  --on-c: #fff;
+
+  --num: 'Oswald', 'Arial Narrow', sans-serif;
   --body: 'Zen Kaku Gothic New', 'Hiragino Sans', sans-serif;
 
   color-scheme: light;
 }
+
+[data-month='4'] { --c: #ee6a3c; --ci: #c24a1e; }
+[data-month='7'] { --c: #7fb5a2; --ci: #3d7a65; --on-c: #10261e; }
+[data-month='8'] { --c: #f2be45; --ci: #946600; --on-c: #2b2000; }
+[data-month='9'] { --c: #136170; --ci: #136170; }
+[data-month='10'] { --c: #2f4b8f; --ci: #2f4b8f; }
+[data-month='11'] { --c: #3c3f45; --ci: #3c3f45; }
 
 *,
 *::before,
@@ -22,21 +31,17 @@
 }
 
 html {
-  scroll-padding-top: 24px;
+  scroll-padding-top: 72px;
+  interpolate-size: allow-keywords;
 }
 
 body {
   margin: 0;
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--body);
   font-size: 16px;
-  line-height: 1.9;
-  background-color: var(--tint);
-  background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: var(--cell) var(--cell);
-  transition: background-color 900ms ease;
+  line-height: 1.85;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -55,7 +60,7 @@ p + p {
 }
 
 :focus-visible {
-  outline: 3px solid var(--stamp);
+  outline: 3px solid var(--ci);
   outline-offset: 3px;
 }
 
@@ -68,179 +73,72 @@ p + p {
   white-space: nowrap;
 }
 
-/* 本文の柱。右端に月のツメが出るぶん、狭い画面では右を空ける */
-.page {
-  width: min(100% - 32px - 44px, 680px);
-  margin: 0 auto 0 16px;
-  padding: 48px 0 120px;
-}
-
-@media (min-width: 768px) {
-  .page {
-    width: min(100% - 160px, 760px);
-    margin: 0 auto;
-  }
-}
-
 /* 表紙 */
-.cover {
-  padding: 40px 0 56px;
+.hero {
+  width: min(100% - 40px, 960px);
+  margin: 0 auto;
+  padding: 72px 0 64px;
 }
 
-.cover__year {
-  margin: 0 0 8px;
-  color: var(--stamp);
-  font-family: var(--hand);
-  font-size: 18px;
+.hero__year {
+  margin: 0;
+  font-family: var(--num);
+  font-size: clamp(96px, 22vw, 200px);
   font-weight: 600;
+  line-height: 0.9;
+  letter-spacing: -0.01em;
 }
 
-.cover__title {
-  margin: 0 0 32px;
-  font-family: var(--hand);
-  font-size: clamp(30px, 7vw, 52px);
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: 0.02em;
+/* 2026 の下に、4月から11月までの色を並べた細い帯 */
+.hero__stripe {
+  display: flex;
+  gap: 4px;
+  width: min(100%, 420px);
+  height: 8px;
+  margin: 20px 0 28px;
 }
 
-.prose {
-  max-width: 38em;
+.hero__stripe span {
+  flex: 1;
+  background: var(--c);
+}
+
+.hero__stripe .is-empty {
+  background: var(--empty);
+}
+
+.hero__title {
+  margin: 0 0 28px;
+  font-size: clamp(24px, 4.4vw, 34px);
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+}
+
+.hero__body {
+  max-width: 36em;
+  color: var(--ink-soft);
 }
 
 /* 地の文の節（自己紹介・おわりに） */
 .note {
-  margin: 0 0 72px;
+  width: min(100% - 40px, 640px);
+  margin: 0 auto;
+  padding: 56px 0;
 }
 
 .note__head {
   margin: 0 0 16px;
-  font-family: var(--hand);
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 1.4;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
-/* 月の区切り。手帳の月の扉のように大きな数字を置く */
-.month {
-  margin: 0 0 40px;
-}
-
-.month__head {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  margin: 0 0 24px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--ink);
-  font-family: var(--hand);
-  font-weight: 600;
-  line-height: 1;
-}
-
-.month__num {
-  font-size: 64px;
-}
-
-.month__unit {
-  font-size: 24px;
-}
-
-/* 項目。左に日付のスタンプ、右にノートへ貼ったカード */
-.entry {
-  display: grid;
-  gap: 8px;
-  margin: 0 0 48px;
-}
-
-@media (min-width: 768px) {
-  .entry {
-    grid-template-columns: 96px 1fr;
-    gap: 16px;
-  }
-}
-
-.entry__date {
-  padding-top: 12px;
-}
-
-.stamp {
-  display: inline-block;
-  padding: 2px 10px;
-  border: 2px solid var(--stamp);
-  border-radius: 4px;
-  color: var(--stamp);
-  font-family: var(--hand);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1.6;
-  white-space: nowrap;
-  rotate: -4deg;
-  opacity: 0.88;
-}
-
-.card {
-  position: relative;
-  padding: 28px 24px 24px;
-  border-radius: 2px;
-  background: var(--card);
-  box-shadow:
-    0 1px 0 rgb(38 43 53 / 0.08),
-    0 8px 18px -12px rgb(38 43 53 / 0.35);
-}
-
-/* カードの上端を留めるマスキングテープ */
-.card::before {
-  content: '';
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  width: 96px;
-  height: 22px;
-  translate: -50% 0;
-  rotate: var(--tape-tilt, -2deg);
-  background: var(--tape, rgb(172 205 190 / 0.75));
-}
-
-.card__title {
-  margin: 0 0 12px;
-  font-family: var(--hand);
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.45;
-}
-
-.card__extras {
-  display: grid;
-  gap: 24px;
-  margin-top: 24px;
-}
-
-/* 画像の枠。テープで留めた写真のように少し傾ける */
-.shot {
-  margin: 0;
-}
-
-.shot__frame {
-  padding: 8px 8px 10px;
-  background: #fff;
-  box-shadow: 0 1px 4px rgb(38 43 53 / 0.18);
-  rotate: var(--shot-tilt, 1deg);
-}
-
-.shot__empty {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 16 / 10;
-  border: 1px dashed var(--rule);
+.note__body {
   color: var(--ink-soft);
-  font-size: 14px;
-  background: repeating-linear-gradient(-45deg, #f7f8f6 0 8px, #fdfdfb 8px 16px);
 }
 
-.shot__caption {
-  margin-top: 8px;
-  color: var(--ink-soft);
-  font-size: 13px;
-  text-align: center;
+.cover-shot {
+  margin-top: 40px;
+  max-width: 640px;
 }

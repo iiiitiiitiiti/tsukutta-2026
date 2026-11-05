@@ -1,0 +1,325 @@
+---
+// 年表の1項目。線の上の丸から点線を伸ばし、左右どちらかに日付・名前・一言を置く。
+// 「くわしく読む」を押すと、原稿の全文・さわれる実物・大きなスクショが開く
+import Shot from './Shot.astro';
+import Counter from './Counter.astro';
+import Demo from './Demo.astro';
+
+type Extra = { id: string; match: string; icon?: string; lead?: string; counter?: { value: string; unit: string }; demo?: string; noShot?: boolean };
+interface Props {
+  date: string;
+  month: number;
+  day: number;
+  title: string;
+  paragraphs: string[];
+  tools: Extra[];
+  side: 'left' | 'right';
+}
+const { month, day, title, paragraphs, tools, side } = Astro.props;
+const single = tools.length === 1 ? tools[0] : null;
+const counters = tools.filter((t) => t.counter);
+const demos = tools.filter((t) => t.demo);
+const shots = tools.filter((t) => !t.noShot);
+---
+<article class="item" data-side={side}>
+  <span class="item__node" aria-hidden="true"></span>
+  <div class="item__card">
+    <p class="item__date"><span class="item__m">{month}</span><span class="item__dot">.</span><span class="item__d">{String(day).padStart(2, '0')}</span><span class="sr-only">{month}月{day}日</span></p>
+
+    {single ? (
+      <div class="item__head">
+        <Shot id={single.id} alt={`${single.match}の画面`} variant="thumb" icon={single.icon} />
+        <div>
+          <h3 class="item__title">{title}</h3>
+          {single.lead && <p class="item__lead">{single.lead}</p>}
+        </div>
+      </div>
+    ) : (
+      <>
+        <h3 class="item__title item__title--multi">{tools.length}つ作った日</h3>
+        <ul class="item__tools">
+          {tools.map((t) => (
+            <li class="item__tool" style="--thumb: 56px">
+              <Shot id={t.id} alt={`${t.match}の画面`} variant="thumb" icon={t.icon} />
+              <div>
+                <p class="item__tool-name">{t.match}</p>
+                {t.lead && <p class="item__lead">{t.lead}</p>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </>
+    )}
+
+    {counters.length > 0 && (
+      <div class="item__counters">
+        {counters.map((t) => <Counter value={t.counter!.value} unit={t.counter!.unit} label={tools.length > 1 ? t.match : ''} />)}
+      </div>
+    )}
+
+    <details class="item__more">
+      <summary class="item__summary"><span class="item__open">くわしく読む</span><span class="item__close">閉じる</span></summary>
+      <div class="item__body">
+        <div class="item__text">{paragraphs.map((p) => <p>{p}</p>)}</div>
+        {demos.map((t) => <Demo kind={t.demo!} />)}
+        {shots.map((t) => <Shot id={t.id} alt={`${t.match}の画面`} variant="full" />)}
+      </div>
+    </details>
+  </div>
+</article>
+
+<style>
+  .item {
+    position: relative;
+    padding: 0 0 56px 56px;
+  }
+
+  /* 線の上の丸。外側の輪は月の色 */
+  .item__node {
+    position: absolute;
+    top: 30px;
+    left: 14px;
+    width: 20px;
+    height: 20px;
+    border: 4px solid var(--c);
+    border-radius: 50%;
+    background: var(--surface);
+  }
+
+  .item__card {
+    position: relative;
+  }
+
+  /* 丸から日付へ伸びる点線 */
+  .item__card::before {
+    content: '';
+    position: absolute;
+    top: 39px;
+    left: -22px;
+    width: 18px;
+    border-top: 2px dotted var(--c);
+  }
+
+  .item__date {
+    display: flex;
+    align-items: baseline;
+    margin: 0 0 12px;
+    color: var(--ci);
+    font-family: var(--num);
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .item__m,
+  .item__d {
+    font-size: 56px;
+  }
+
+  .item__dot {
+    font-size: 40px;
+    padding: 0 2px;
+  }
+
+  .item__head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    --thumb: 64px;
+  }
+
+  .item__head > div,
+  .item__tool > div {
+    min-width: 0;
+  }
+
+  .item__title {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.45;
+    letter-spacing: 0.02em;
+  }
+
+  .item__title--multi {
+    margin-bottom: 12px;
+  }
+
+  .item__lead {
+    color: var(--ink-soft);
+    font-size: 14px;
+    line-height: 1.7;
+    text-wrap: pretty;
+  }
+
+  .item__tools {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .item__tool {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .item__tool-name {
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .item__counters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+    margin-top: 16px;
+  }
+
+  .item__more {
+    margin-top: 16px;
+  }
+
+  .item__summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border: 1.5px solid var(--ci);
+    border-radius: 999px;
+    color: var(--ci);
+    font-size: 14px;
+    font-weight: 700;
+    list-style: none;
+    cursor: pointer;
+    transition: background-color 200ms, color 200ms;
+  }
+
+  .item__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .item__summary::after {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    rotate: 45deg;
+    translate: 0 -2px;
+    transition: rotate 250ms, translate 250ms;
+  }
+
+  .item__summary:hover {
+    background: var(--ci);
+    color: #fff;
+  }
+
+  .item__more[open] .item__summary::after {
+    rotate: 225deg;
+    translate: 0 2px;
+  }
+
+  .item__close,
+  .item__more[open] .item__open {
+    display: none;
+  }
+
+  .item__more[open] .item__close {
+    display: inline;
+  }
+
+  /* 開くときは高さを伸ばして見せる（対応していないブラウザではすぐ開く） */
+  .item__more::details-content {
+    height: 0;
+    overflow: clip;
+    transition: height 380ms cubic-bezier(0.2, 0.8, 0.2, 1), content-visibility 380ms allow-discrete;
+  }
+
+  .item__more[open]::details-content {
+    height: auto;
+  }
+
+  .item__body {
+    display: grid;
+    gap: 24px;
+    padding: 20px 0 4px;
+  }
+
+  .item__text {
+    max-width: 34em;
+  }
+
+  /* 広い画面では中央の線をはさんで左右交互に置く */
+  @media (min-width: 900px) {
+    .item {
+      width: 50%;
+      padding: 0 0 72px 56px;
+    }
+
+    .item[data-side='left'] {
+      padding: 0 56px 72px 0;
+      text-align: right;
+    }
+
+    .item[data-side='right'] {
+      margin-left: 50%;
+    }
+
+    .item[data-side='left'] .item__node {
+      left: auto;
+      right: -10px;
+    }
+
+    .item[data-side='right'] .item__node {
+      left: -10px;
+    }
+
+    .item__card::before {
+      left: -46px;
+      width: 40px;
+    }
+
+    .item[data-side='left'] .item__card::before {
+      left: auto;
+      right: -46px;
+    }
+
+    .item[data-side='left'] .item__date,
+    .item[data-side='left'] .item__counters {
+      justify-content: flex-end;
+    }
+
+    .item[data-side='left'] .item__head,
+    .item[data-side='left'] .item__tool {
+      flex-direction: row-reverse;
+    }
+
+    .item[data-side='left'] .item__body {
+      text-align: left;
+    }
+
+    .item[data-side='left'] .item__text {
+      margin-left: auto;
+    }
+
+    /* 前の項目の下半分と高さを重ね、左右が互い違いに並んで見えるようにする */
+    .item + .item {
+      margin-top: -150px;
+    }
+
+    .item__head {
+      --thumb: 88px;
+    }
+
+    .item__m,
+    .item__d {
+      font-size: 72px;
+    }
+
+    .item__dot {
+      font-size: 48px;
+    }
+  }
+</style>

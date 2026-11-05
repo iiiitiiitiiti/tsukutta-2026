@@ -1,28 +1,87 @@
 ---
-// スクショ1枚。public/shots/<id>.webp があれば写真として出し、無ければ準備中の紙を置く
-import { existsSync } from 'node:fs';
+// スクショ。丸い小窓（thumb）と、全文の中の大きな1枚（full）の2つの出し方がある。
+// public/shots/<id>.webp が無いあいだ、小窓はアイコン、大きな1枚は準備中の枠になる
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 interface Props {
   id: string;
   alt: string;
-  tilt?: number;
+  variant: 'thumb' | 'full';
+  icon?: string;
 }
-const { id, alt, tilt = 1 } = Astro.props;
+const { id, alt, variant, icon } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const hasWebp = existsSync(resolve(process.cwd(), 'public/shots', `${id}.webp`));
-const hasAvif = existsSync(resolve(process.cwd(), 'public/shots', `${id}.avif`));
+const shots = resolve(process.cwd(), 'public/shots');
+const hasWebp = existsSync(resolve(shots, `${id}.webp`));
+const hasAvif = existsSync(resolve(shots, `${id}.avif`));
+const iconPath = icon ? resolve(process.cwd(), 'node_modules/lucide-static/icons', `${icon}.svg`) : '';
+const svg = iconPath && existsSync(iconPath) ? readFileSync(iconPath, 'utf8').replace(/<!--[\s\S]*?-->/g, '') : '';
+const src = `${base}/shots/${id}`;
 ---
-<figure class="shot" style={`--shot-tilt: ${tilt}deg`}>
-  <div class="shot__frame">
-    {hasWebp ? (
-      <picture>
-        {hasAvif && <source srcset={`${base}/shots/${id}.avif`} type="image/avif" />}
-        <img src={`${base}/shots/${id}.webp`} alt={alt} loading="lazy" decoding="async" />
-      </picture>
-    ) : (
-      <div class="shot__empty">画像を準備中</div>
-    )}
-  </div>
-  <figcaption class="shot__caption">{alt}</figcaption>
-</figure>
+{variant === 'thumb' ? (
+  <span class="thumb" aria-hidden="true">
+    {hasWebp ? <picture>{hasAvif && <source srcset={`${src}.avif`} type="image/avif" />}<img src={`${src}.webp`} alt="" loading="lazy" decoding="async" /></picture> : <span class="thumb__icon" set:html={svg} />}
+  </span>
+) : (
+  <figure class="full">
+    {hasWebp ? <picture>{hasAvif && <source srcset={`${src}.avif`} type="image/avif" />}<img src={`${src}.webp`} alt={alt} loading="lazy" decoding="async" /></picture> : <div class="full__empty">画像を準備中</div>}
+    <figcaption class="full__caption">{alt}</figcaption>
+  </figure>
+)}
+
+<style>
+  .thumb {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: var(--thumb, 88px);
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--c);
+    color: var(--on-c);
+  }
+
+  .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .thumb__icon {
+    display: grid;
+    width: 42%;
+  }
+
+  .thumb__icon :global(svg) {
+    width: 100%;
+    height: auto;
+    stroke-width: 1.75;
+  }
+
+  .full {
+    margin: 0;
+  }
+
+  .full img,
+  .full__empty {
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px var(--rule);
+  }
+
+  .full__empty {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 10;
+    color: var(--ink-soft);
+    font-size: 14px;
+    background: #f6f7f9;
+  }
+
+  .full__caption {
+    margin-top: 8px;
+    color: var(--ink-soft);
+    font-size: 13px;
+  }
+</style>

@@ -1,0 +1,128 @@
+---
+// 上に固定する月の色帯。読んでいる月の帯が太くなり、作ったものが無い月は灰色で残す
+interface Props {
+  months: number[];
+}
+const { months } = Astro.props;
+const all = [4, 5, 6, 7, 8, 9, 10, 11];
+---
+<nav class="bar" aria-label="月ごとに移動">
+  <ol class="bar__list">
+    {all.map((m) =>
+      months.includes(m) ? (
+        <li class="bar__item" data-month={m}>
+          <a class="bar__link" href={`#m${m}`} data-bar={m}>
+            <span class="bar__seg"></span>
+            <span class="bar__label">{m}月</span>
+          </a>
+        </li>
+      ) : (
+        <li class="bar__item is-empty">
+          <span class="bar__link">
+            <span class="bar__seg"></span>
+            <span class="bar__label">{m}月<span class="sr-only">（作ったものは無し）</span></span>
+          </span>
+        </li>
+      ),
+    )}
+  </ol>
+</nav>
+
+<style>
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 10px 20px 6px;
+    background: rgb(243 244 246 / 0.92);
+    backdrop-filter: blur(8px);
+  }
+
+  .bar__list {
+    display: flex;
+    gap: 4px;
+    width: min(100%, 960px);
+    margin: 0 auto;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bar__item {
+    flex: 1;
+  }
+
+  .bar__link {
+    display: grid;
+    gap: 4px;
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+
+  .bar__seg {
+    display: block;
+    height: 6px;
+    background: var(--c);
+    opacity: 0.45;
+    transition: height 300ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms;
+  }
+
+  .is-empty .bar__seg {
+    background: var(--empty);
+    opacity: 1;
+  }
+
+  .bar__label {
+    font-family: var(--num);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+    transition: color 300ms;
+  }
+
+  .is-empty .bar__label {
+    color: #9aa1ad;
+  }
+
+  a.bar__link:hover .bar__seg {
+    opacity: 0.8;
+  }
+
+  .bar__link[aria-current='true'] .bar__seg {
+    height: 12px;
+    opacity: 1;
+  }
+
+  .bar__link[aria-current='true'] .bar__label {
+    color: var(--ci);
+    font-weight: 600;
+  }
+
+  @media (min-width: 768px) {
+    .bar__label {
+      font-size: 14px;
+    }
+  }
+</style>
+
+<script>
+  const links = new Map<number, HTMLElement>();
+  document.querySelectorAll<HTMLElement>('[data-bar]').forEach((el) => links.set(Number(el.dataset.bar), el));
+  let current = 0;
+
+  const show = (month: number) => {
+    if (month === current) return;
+    current = month;
+    links.forEach((el, m) => el.setAttribute('aria-current', String(m === month)));
+  };
+
+  // 画面の上から3分の1あたりを横切る細い帯に入った月を「今の月」とする
+  const sections = [...document.querySelectorAll<HTMLElement>('.tl-month[data-month]')];
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) if (e.isIntersecting) show(Number((e.target as HTMLElement).dataset.month));
+    },
+    { rootMargin: '-33% 0px -66% 0px' },
+  );
+  sections.forEach((s) => observer.observe(s));
+</script>

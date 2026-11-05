@@ -9,7 +9,7 @@ const { value, unit, label } = Astro.props;
 ---
 <p class="counter">
   <span class="counter__value" data-roll>{value}</span><span class="counter__unit">{unit}</span>
-  <span class="counter__label">{label}</span>
+  {label && <span class="counter__label">{label}</span>}
 </p>
 
 <style>
@@ -21,30 +21,26 @@ const { value, unit, label } = Astro.props;
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 2px 8px;
+    gap: 2px 6px;
     margin: 0;
-    padding: 4px 0 12px;
-    border-bottom: 1px dashed var(--rule);
   }
 
   .counter__value {
     display: inline-flex;
-    color: var(--stamp);
-    font-family: var(--hand);
-    font-size: 48px;
+    color: var(--ci);
+    font-family: var(--num);
+    font-size: 44px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     line-height: 1.15;
   }
 
   .counter__unit {
-    font-family: var(--hand);
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
   }
 
   .counter__label {
-    flex-basis: 100%;
     color: var(--ink-soft);
     font-size: 13px;
   }
