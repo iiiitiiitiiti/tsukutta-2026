@@ -101,14 +101,12 @@ p + p {
 }
 
 .hero__body {
-  max-width: 34em;
-  margin: 0 auto;
   color: var(--ink-soft);
 }
 
 /* 地の文の節（自己紹介・おわりに） */
 .note {
-  width: min(100% - 40px, 640px);
+  width: min(100% - 40px, 1200px);
   margin: 0 auto;
   padding: 56px 0;
 }
