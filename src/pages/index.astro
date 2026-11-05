@@ -64,12 +64,15 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     <main class="tl">
       {monthSections.map((s) => (
         <section class="tl-month" id={`m${s.month}`} data-month={s.month} aria-labelledby={`mh${s.month}`}>
-          <h2 class="tl-month__head" id={`mh${s.month}`}>
-            <span class="tl-month__num">{s.month}</span><span class="tl-month__unit">月</span>
-          </h2>
-          {s.entries.map((e, i) => (
-            <TimelineItem {...e} tools={e.tools.map((id) => extras.get(id)!)} side={side()} first={i === 0} />
-          ))}
+          <div class="tl-month__inner">
+            <h2 class="tl-month__head" id={`mh${s.month}`}>
+              <span class="tl-month__name"><span class="tl-month__num">{s.month}</span><span class="tl-month__unit">月</span></span>
+              <span class="tl-month__count">{counts[s.month]}つ作った</span>
+            </h2>
+            {s.entries.map((e, i) => (
+              <TimelineItem {...e} tools={e.tools.map((id) => extras.get(id)!)} side={side()} first={i === 0} />
+            ))}
+          </div>
         </section>
       ))}
     </main>
@@ -85,61 +88,84 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
 </html>
 
 <style>
-  .tl {
+  /* 月ごとに、その月の色で塗った帯を横いっぱいに敷く */
+  .tl-month {
+    padding: 88px 0 40px;
+    background: var(--c);
+    color: var(--on-c);
+  }
+
+  .tl-month__inner {
+    position: relative;
     width: min(100% - 40px, 1040px);
     margin: 0 auto;
   }
 
-  /* 月ごとに、その月の色の縦線を引く。月と月のあいだに小さな切れ目ができる */
-  .tl-month {
-    position: relative;
-    padding-top: 24px;
-  }
-
-  .tl-month::before {
+  /* 縦の線。帯の色の上に、白（明るい月は墨）で細く引く */
+  .tl-month__inner::before {
     content: '';
     position: absolute;
     top: 0;
-    bottom: 6px;
+    bottom: 0;
     left: 22px;
-    width: 4px;
-    background: var(--c);
+    width: 2px;
+    background: var(--on-c);
+    opacity: 0.5;
   }
 
+  /* 月の見出し。大きな数字で線の頭をふさぐ */
   .tl-month__head {
     position: relative;
-    display: inline-flex;
-    align-items: baseline;
-    gap: 2px;
-    margin: 0 0 32px;
-    padding: 4px 16px 6px;
-    border-radius: 999px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: fit-content;
+    margin: 0 0 40px;
+    padding: 0 0 16px;
     background: var(--c);
-    color: var(--on-c);
-    line-height: 1;
+    line-height: 0.85;
+  }
+
+  .tl-month__name {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
   }
 
   .tl-month__num {
     font-family: var(--num);
-    font-size: 30px;
+    font-size: clamp(96px, 26vw, 200px);
     font-weight: 600;
+    letter-spacing: -0.02em;
   }
 
   .tl-month__unit {
-    font-size: 15px;
+    font-size: clamp(24px, 5vw, 36px);
     font-weight: 700;
   }
 
+  .tl-month__count {
+    font-size: 14px;
+    font-weight: 700;
+    opacity: 0.8;
+  }
+
   @media (min-width: 900px) {
-    .tl-month::before {
-      left: calc(50% - 2px);
+    .tl-month {
+      padding-top: 104px;
+    }
+
+    .tl-month__inner::before {
+      left: calc(50% - 1px);
     }
 
     .tl-month__head {
-      left: 50%;
-      translate: -50% 0;
-      margin-bottom: 48px;
+      align-items: center;
+      margin: 0 auto 64px;
+      padding: 0 24px 24px;
+      text-align: center;
     }
+
   }
 
   .foot {

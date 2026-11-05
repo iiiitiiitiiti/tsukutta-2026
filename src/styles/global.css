@@ -17,7 +17,7 @@
   color-scheme: light;
 }
 
-[data-month='4'] { --c: #ee6a3c; --ci: #c24a1e; }
+[data-month='4'] { --c: #ee6a3c; --ci: #c24a1e; --on-c: #2a1206; }
 [data-month='7'] { --c: #7fb5a2; --ci: #3d7a65; --on-c: #10261e; }
 [data-month='8'] { --c: #f2be45; --ci: #946600; --on-c: #2b2000; }
 [data-month='9'] { --c: #136170; --ci: #136170; }
@@ -73,11 +73,12 @@ p + p {
   white-space: nowrap;
 }
 
-/* 表紙 */
+/* 表紙。年表と同じく中央にそろえる */
 .hero {
   width: min(100% - 40px, 960px);
   margin: 0 auto;
-  padding: 72px 0 64px;
+  padding: 88px 0 72px;
+  text-align: center;
 }
 
 .hero__year {
@@ -98,7 +99,8 @@ p + p {
 }
 
 .hero__body {
-  max-width: 36em;
+  max-width: 34em;
+  margin: 0 auto;
   color: var(--ink-soft);
 }
 
@@ -110,7 +112,8 @@ p + p {
 }
 
 .note__head {
-  margin: 0 0 16px;
+  margin: 0 0 20px;
+  text-align: center;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -121,6 +124,7 @@ p + p {
 }
 
 .cover-shot {
-  margin-top: 40px;
   max-width: 640px;
+  margin: 48px auto 0;
+  text-align: left;
 }

@@ -76,16 +76,16 @@ const shots = tools.filter((t) => !t.noShot);
     padding: 0 0 56px 56px;
   }
 
-  /* 線の上の丸。外側の輪は月の色 */
+  /* 線の上の丸。月の色の帯の上に、白（明るい月は墨）の輪で置く */
   .item__node {
     position: absolute;
     top: 30px;
     left: 14px;
     width: 20px;
     height: 20px;
-    border: 4px solid var(--c);
+    border: 4px solid var(--on-c);
     border-radius: 50%;
-    background: var(--surface);
+    background: var(--c);
   }
 
   .item__card {
@@ -99,14 +99,15 @@ const shots = tools.filter((t) => !t.noShot);
     top: 39px;
     left: -22px;
     width: 18px;
-    border-top: 2px dotted var(--c);
+    border-top: 2px dotted var(--on-c);
+    opacity: 0.6;
   }
 
   .item__date {
     display: flex;
     align-items: baseline;
     margin: 0 0 12px;
-    color: var(--ci);
+    color: var(--on-c);
     font-family: var(--num);
     font-weight: 600;
     line-height: 1;
@@ -160,7 +161,8 @@ const shots = tools.filter((t) => !t.noShot);
   }
 
   .item__lead {
-    color: var(--ink-soft);
+    color: var(--on-c);
+    opacity: 0.8;
     font-size: 14px;
     line-height: 1.7;
     text-wrap: pretty;
@@ -201,7 +203,8 @@ const shots = tools.filter((t) => !t.noShot);
     align-items: center;
     gap: 8px;
     min-height: 44px;
-    color: var(--ink-soft);
+    color: var(--on-c);
+    text-underline-offset: 4px;
     font-size: 14px;
     font-weight: 700;
     list-style: none;
@@ -226,7 +229,11 @@ const shots = tools.filter((t) => !t.noShot);
 
   .item__summary:hover,
   .item__more[open] .item__summary {
-    color: var(--ci);
+    text-decoration: underline;
+  }
+
+  .item__summary:focus-visible {
+    outline-color: var(--on-c);
   }
 
   .item__more[open] .item__summary::after {
@@ -254,10 +261,15 @@ const shots = tools.filter((t) => !t.noShot);
     height: auto;
   }
 
+  /* 全文は白い面にのせて、帯の色の上でも読みやすくする */
   .item__body {
     display: grid;
     gap: 24px;
-    padding: 20px 0 4px;
+    margin-top: 8px;
+    padding: 24px;
+    border-radius: 16px;
+    background: var(--surface);
+    color: var(--ink);
   }
 
   .item__text {
