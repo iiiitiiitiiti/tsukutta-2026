@@ -19,8 +19,8 @@
 }
 
 [data-month='4'] { --c: #bf4518; --ci: #bf4518; }
-[data-month='7'] { --c: #7fb5a2; --ci: #3d7a65; --on-c: #10261e; }
-[data-month='8'] { --c: #f2be45; --ci: #946600; --on-c: #2b2000; }
+[data-month='7'] { --c: #3d7a65; --ci: #3d7a65; }
+[data-month='8'] { --c: #946600; --ci: #946600; }
 [data-month='9'] { --c: #136170; --ci: #136170; }
 [data-month='10'] { --c: #2f4b8f; --ci: #2f4b8f; }
 [data-month='11'] { --c: #3c3f45; --ci: #3c3f45; }
