@@ -496,10 +496,17 @@ const pair = (item: string) => {
       run = null;
       body.style.overflow = '';
     };
+    // 面は余白込みの寸法なので、高さだけ0にしても上下の余白と上の隙間が残り、閉じ終わりに一気に消える。
+    // 余白と隙間も一緒に0まで縮める
+    const snap = () => {
+      const s = getComputedStyle(body);
+      return { height: s.height, paddingTop: s.paddingTop, paddingBottom: s.paddingBottom, marginTop: s.marginTop, opacity: s.opacity };
+    };
+    const shut = { height: '0px', paddingTop: '0px', paddingBottom: '0px', marginTop: '0px', opacity: '0' };
 
     summary.addEventListener('click', (ev) => {
       ev.preventDefault();
-      const from = run ? body.getBoundingClientRect().height : null;
+      const from = run ? snap() : null;
       run?.cancel();
       done();
       body.style.overflow = 'clip';
@@ -507,14 +514,7 @@ const pair = (item: string) => {
       if (closing) {
         flip(false);
         more.classList.add('is-closing');
-        const h = from ?? body.getBoundingClientRect().height;
-        run = body.animate(
-          [
-            { height: `${h}px`, opacity: 1 },
-            { height: '0px', opacity: 0 },
-          ],
-          { duration: 360, easing: EASE },
-        );
+        run = body.animate([from ?? snap(), shut], { duration: 360, easing: EASE });
         run.onfinish = () => {
           more.open = false;
           more.classList.remove('is-closing');
@@ -526,16 +526,9 @@ const pair = (item: string) => {
       flip(true);
       more.classList.add('is-entering');
       more.open = true;
-      const h = body.getBoundingClientRect().height;
-      body.getBoundingClientRect();
+      const to = { ...snap(), opacity: '1' };
       more.classList.remove('is-entering');
-      run = body.animate(
-        [
-          { height: `${from ?? 0}px` },
-          { height: `${h}px` },
-        ],
-        { duration: 520, easing: EASE },
-      );
+      run = body.animate([from ?? { ...shut, opacity: '1' }, to], { duration: 520, easing: EASE });
       run.onfinish = done;
     });
   }
