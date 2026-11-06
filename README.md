@@ -26,7 +26,7 @@ npm run import -- <パス>  # 別の場所の原稿を読む
 
 ## スクショ
 
-`public/shots/<extras の id>.webp`（あれば同名の `.avif` も）を置くと、丸い小窓のアイコンと、全文の中の準備中の枠が写真に替わる。冒頭の棚の画像は `tana-overview`。
+`public/shots/<extras の id>.webp`（あれば同名の `.avif` も）を置くと、全文の中の準備中の枠が写真に替わる。年表の丸い小窓はアイコンのまま。冒頭の棚の画像は `tana-overview`。
 
 ## 開発
 

@@ -24,13 +24,13 @@
 
 /* 帯はライトトーンにして、上の文字は全部の月で黒にする。
    月の色は --m4 などにも置き、年表の帯が次の月の色を呼べるようにする */
-:root { --m4: #f7a985; --m7: #a9d39b; --m8: #f6cf5c; --m9: #86cdc6; --m10: #a7b8ec; --m11: #c3c5cc; }
+:root { --m4: #f7a985; --m7: #a9d39b; --m8: #f6cf5c; --m9: #86cdc6; --m10: #a7b8ec; --m11: #e8b0d5; }
 [data-month='4'] { --c: var(--m4); --ci: #bf4518; }
 [data-month='7'] { --c: var(--m7); --ci: #3d7a65; }
 [data-month='8'] { --c: var(--m8); --ci: #946600; }
 [data-month='9'] { --c: var(--m9); --ci: #136170; }
 [data-month='10'] { --c: var(--m10); --ci: #2f4b8f; }
-[data-month='11'] { --c: var(--m11); --ci: #3c3f45; }
+[data-month='11'] { --c: var(--m11); --ci: #82326c; }
 
 *,
 *::before,
@@ -40,6 +40,8 @@
 
 html {
   scroll-padding-top: 72px;
+  /* ページ内のリンク（月の帯・表紙のアイコン・上に戻る）で、飛ばずに滑って移る */
+  scroll-behavior: smooth;
   scroll-snap-type: y proximity;
   interpolate-size: allow-keywords;
 }

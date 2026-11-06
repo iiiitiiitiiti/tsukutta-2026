@@ -112,14 +112,21 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
 
 <style>
   /* 月ごとに、その月の色で塗った帯を横いっぱいに敷く。月の見出しの所はその月の色のまま置き、
-     そこから下へ次の月の色へ移していく。帯の境目で色がつながり、季節が移るように見える */
+     そこから下へ次の月の色へ移していく。帯の境目で色がつながり、季節が移るように見える。
+     色は oklch で混ぜる。oklab や sRGB で混ぜると、色相の離れた月どうし（4月の橙と7月の緑など）の
+     中ほどで鮮やかさが抜けて濁る。oklch は鮮やかさを保ったまま色相を回すので、間に黄色などが挟まる */
   .tl-month {
     /* 色を変え始める所。月の見出しの箱（上の余白＋大きな数字＋添え書き）の下端より少し下に置く */
     --hold: calc(88px + clamp(96px, 26vw, 200px) * 0.85 + 80px);
     padding: 88px 0 40px;
     background: var(--c) linear-gradient(var(--c) var(--hold), var(--c-next));
-    background: var(--c) linear-gradient(in oklab, var(--c) var(--hold), var(--c-next));
+    background: var(--c) linear-gradient(in oklch, var(--c) var(--hold), var(--c-next));
     color: var(--on-c);
+  }
+
+  /* 最後の月は白へ移す。白には色相が無く、oklch で混ぜると途中に別の色相（薄い紫）が出るので oklab で混ぜる */
+  .tl-month:last-child {
+    background: var(--c) linear-gradient(in oklab, var(--c) var(--hold), var(--c-next));
   }
 
   .tl-month__inner {

@@ -123,12 +123,17 @@ const { value, unit, label } = Astro.props;
       );
     };
 
-    // 回るのは最初に画面へ入ったときだけ。外へ出て戻っても止まった数字のまま
+    // 回るのは最初に画面へ入ったときだけ。外へ出て戻っても止まった数字のまま。
+    // ページ内リンクで滑って通り過ぎるだけのときは回さない。0.3秒とどまって見えていたら回す
+    let wait = 0;
     const io = new IntersectionObserver(
       ([e]) => {
+        clearTimeout(wait);
         if (e.intersectionRatio < 0.6) return;
-        io.disconnect();
-        play();
+        wait = window.setTimeout(() => {
+          io.disconnect();
+          play();
+        }, 300);
       },
       { threshold: 0.6 },
     );
