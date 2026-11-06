@@ -22,15 +22,21 @@
   color-scheme: light;
 }
 
-/* 帯はライトトーンにして、上の文字は全部の月で黒にする。
-   月の色は --m4 などにも置き、年表の帯が次の月の色を呼べるようにする */
-:root { --m4: #f7a985; --m7: #a9d39b; --m8: #f6cf5c; --m9: #86cdc6; --m10: #a7b8ec; --m11: #e8b0d5; }
-[data-month='4'] { --c: var(--m4); --ci: #bf4518; }
-[data-month='7'] { --c: var(--m7); --ci: #3d7a65; }
-[data-month='8'] { --c: var(--m8); --ci: #946600; }
-[data-month='9'] { --c: var(--m9); --ci: #136170; }
-[data-month='10'] { --c: var(--m10); --ci: #2f4b8f; }
-[data-month='11'] { --c: var(--m11); --ci: #82326c; }
+/* 月の色。--mN は表紙の丸と上の色帯に使うライトトーン。
+   --bN は年表の帯の地の色で、同じ色相のまま明るく薄くしたもの（oklch の明るさ0.91・鮮やかさ6割）。
+   帯の上の文字は全部の月で黒。--bN は年表の帯が次の月の色を呼べるよう :root に置く。
+   12月は、原稿に12月の節ができたときに使う */
+:root {
+  --m4: #f7a985; --m7: #a9d39b; --m8: #f6cf5c; --m9: #86cdc6; --m10: #a7b8ec; --m11: #e8b0d5; --m12: #8dcef4;
+  --b4: #ffd5bf; --b7: #d1eac8; --b8: #f6e0a1; --b9: #c2ebe6; --b10: #d5e0ff; --b11: #f8d5ec; --b12: #c2e8ff;
+}
+[data-month='4'] { --c: var(--m4); --band: var(--b4); --ci: #bf4518; }
+[data-month='7'] { --c: var(--m7); --band: var(--b7); --ci: #3d7a65; }
+[data-month='8'] { --c: var(--m8); --band: var(--b8); --ci: #946600; }
+[data-month='9'] { --c: var(--m9); --band: var(--b9); --ci: #136170; }
+[data-month='10'] { --c: var(--m10); --band: var(--b10); --ci: #2f4b8f; }
+[data-month='11'] { --c: var(--m11); --band: var(--b11); --ci: #82326c; }
+[data-month='12'] { --c: var(--m12); --band: var(--b12); --ci: #005d89; }
 
 *,
 *::before,

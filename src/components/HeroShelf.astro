@@ -18,14 +18,16 @@ interface Props {
   tools: Tool[];
 }
 const { tools } = Astro.props;
-const months = [4, 5, 6, 7, 8, 9, 10, 11];
+// 4月から、11月か作ったものがある最後の月まで。12月の節を原稿に足せば12月の列も出る
+const last = Math.max(11, ...tools.map((t) => t.month));
+const months = Array.from({ length: last - 3 }, (_, i) => i + 4);
 const max = Math.max(...months.map((m) => tools.filter((t) => t.month === m).length));
 const svgOf = (icon?: string) => {
   const p = icon ? resolve(process.cwd(), 'node_modules/lucide-static/icons', `${icon}.svg`) : '';
   return p && existsSync(p) ? readFileSync(p, 'utf8').replace(/<!--[\s\S]*?-->/g, '') : '';
 };
 ---
-<nav class="chart" aria-label={`月ごとに作った数。全部で${tools.length}こ`} style={`--max: ${max}`} data-chart>
+<nav class="chart" aria-label={`月ごとに作った数。全部で${tools.length}こ`} style={`--max: ${max}; --cols: ${months.length}`} data-chart>
   <p class="chart__caption" aria-hidden="true" data-caption><span class="chart__cap-date" data-cap-date></span><span class="chart__cap-name" data-cap-name></span></p>
   <ol class="chart__cols">
     {months.map((m) => {
@@ -54,8 +56,10 @@ const svgOf = (icon?: string) => {
 </nav>
 
 <style>
+  /* 丸の大きさは34pxまで。列が増えて（12月の列など）幅に収まらないときは、列の幅に合わせて小さくする */
   .chart {
-    --size: 34px;
+    container-type: inline-size;
+    --size: min(34px, (100cqi - (var(--cols) - 1) * 4px) / var(--cols));
     --gap: 4px;
     --lift: 10px;
     position: relative;
@@ -64,7 +68,7 @@ const svgOf = (icon?: string) => {
 
   .chart__cols {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
+    grid-template-columns: repeat(var(--cols), 1fr);
     align-items: end;
     gap: 0 4px;
     margin: 0;
@@ -245,7 +249,7 @@ const svgOf = (icon?: string) => {
 
   @media (min-width: 900px) {
     .chart {
-      --size: 60px;
+      --size: min(60px, (100cqi - (var(--cols) - 1) * 12px) / var(--cols));
       --gap: 6px;
       --lift: 14px;
     }

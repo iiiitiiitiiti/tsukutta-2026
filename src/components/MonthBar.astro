@@ -4,7 +4,9 @@ interface Props {
   months: number[];
 }
 const { months } = Astro.props;
-const all = [4, 5, 6, 7, 8, 9, 10, 11];
+// 4月から、11月か作ったものがある最後の月まで。12月の節を原稿に足せば12月の列も出る
+const last = Math.max(11, ...months);
+const all = Array.from({ length: last - 3 }, (_, i) => i + 4);
 ---
 <nav class="bar" aria-label="月ごとに移動">
   <ol class="bar__list">

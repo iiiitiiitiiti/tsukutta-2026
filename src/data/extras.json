@@ -4,7 +4,7 @@
   { "id": "flashcards", "match": "暗記カード", "icon": "layers", "lead": "忘れかけたころに出し直して覚える、自分用の単語カード", "counter": { "value": "29,961", "unit": "枚" }, "demo": "flashcards" },
   { "id": "disney-archive", "match": "disney-archive", "icon": "castle", "lead": "公式ブログの記事と過去の公式サイトの保存、ディズニーに関わる人物の名鑑", "counter": { "value": "360", "unit": "人" } },
   { "id": "quiz-atlas", "match": "QUIZ ATLAS", "icon": "map", "lead": "約3万問を集計した、作問のアトリエ" },
-  { "id": "gakki-plan", "match": "楽器のはじめかた", "icon": "music", "lead": "楽器の学び方を組み立てた最初のプラン。今は Aʻo Hawaiʻi の一部" },
+  { "id": "gakki-plan", "match": "楽器のはじめかた", "icon": "music", "lead": "楽器の学び方を組み立てた最初のプラン。いまはAʻo Hawaiʻiの一部" },
   { "id": "ao-hawaii", "match": "Aʻo Hawaiʻi", "icon": "palmtree", "lead": "ハワイの講座とウクレレの教材をまとめた学習サイト" },
   { "id": "gaman-log", "match": "がまんログ", "icon": "piggy-bank", "lead": "がまんした買い物とむだづかいを記録して、節約を目に見える形にする" },
   { "id": "sakumon-review", "match": "作問レビュー", "icon": "dices", "lead": "自作のクイズをスマホで1問ずつ見直すレビューページ", "counter": { "value": "15,639", "unit": "語" } },

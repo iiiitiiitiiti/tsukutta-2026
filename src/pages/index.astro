@@ -39,6 +39,10 @@ const anchorOf = (e: Entry) => `i-${e.tools[0]}`;
 const shelf = monthSections.flatMap((s) => s.entries.flatMap((e) => e.tools.map((id) => ({ id, name: extras.get(id)!.match, icon: extras.get(id)!.icon, month: e.month, day: e.day, anchor: anchorOf(e) }))));
 // 題は「〜を」の後ろで2行に分ける。原稿の題に「を」が無ければそのまま1つの塊で出す
 const titleParts = timeline.title.includes('を') ? [timeline.title.slice(0, timeline.title.indexOf('を') + 1), timeline.title.slice(timeline.title.indexOf('を') + 1)] : [timeline.title];
+// 年表の終わりに置く「つづく」。最後の月の次の月を出す。12月まであれば来年へつづく
+const lastShown = monthSections.at(-1)!.month;
+const nextLabel = lastShown < 12 ? `${lastShown + 1}` : '2027';
+const nextText = lastShown < 12 ? `${lastShown + 1}月へつづく` : '来年へつづく';
 const arrowUp = readFileSync(resolve(process.cwd(), 'node_modules/lucide-static/icons/arrow-up.svg'), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
 const description = `Webデザイナーが今年AIに頼んで作ったアプリやページ${total}件を、作った日の順に並べた年表。`;
 ---
@@ -81,7 +85,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
 
     <main class="tl">
       {monthSections.map((s, i) => (
-        <section class="tl-month" id={`m${s.month}`} data-month={s.month} aria-labelledby={`mh${s.month}`} style={`--c-next: ${monthSections[i + 1] ? `var(--m${monthSections[i + 1].month})` : 'var(--bg)'}`}>
+        <section class="tl-month" id={`m${s.month}`} data-month={s.month} aria-labelledby={`mh${s.month}`} style={`--c-next: ${monthSections[i + 1] ? `var(--b${monthSections[i + 1].month})` : 'var(--bg)'}`}>
           <div class="tl-month__inner">
             <h2 class="tl-month__head" id={`mh${s.month}`} data-reveal>
               <span class="tl-month__name"><span class="tl-month__num">{s.month}</span><span class="tl-month__unit">月</span></span>
@@ -93,6 +97,15 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
           </div>
         </section>
       ))}
+      {/* 年表はここで終わりではない。線を点線にして下へ伸ばし、次の月の数字を輪郭だけで置く */}
+      <div class="tl-next" data-reveal>
+        <div class="tl-next__inner">
+          <p class="tl-next__head">
+            <span class="tl-next__num" aria-hidden="true">{nextLabel}</span>
+            <span class="tl-next__text">{nextText}</span>
+          </p>
+        </div>
+      </div>
     </main>
 
     {(after as TextSection[]).map((s) => (
@@ -119,14 +132,14 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     /* 色を変え始める所。月の見出しの箱（上の余白＋大きな数字＋添え書き）の下端より少し下に置く */
     --hold: calc(88px + clamp(96px, 26vw, 200px) * 0.85 + 80px);
     padding: 88px 0 40px;
-    background: var(--c) linear-gradient(var(--c) var(--hold), var(--c-next));
-    background: var(--c) linear-gradient(in oklch, var(--c) var(--hold), var(--c-next));
+    background: var(--band) linear-gradient(var(--band) var(--hold), var(--c-next));
+    background: var(--band) linear-gradient(in oklch, var(--band) var(--hold), var(--c-next));
     color: var(--on-c);
   }
 
   /* 最後の月は白へ移す。白には色相が無く、oklch で混ぜると途中に別の色相（薄い紫）が出るので oklab で混ぜる */
-  .tl-month:last-child {
-    background: var(--c) linear-gradient(in oklab, var(--c) var(--hold), var(--c-next));
+  .tl-month:last-of-type {
+    background: var(--band) linear-gradient(in oklab, var(--band) var(--hold), var(--c-next));
   }
 
   .tl-month__inner {
@@ -156,7 +169,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     width: fit-content;
     margin: 0 0 40px;
     padding: 0 0 16px;
-    background: var(--c);
+    background: var(--band);
     line-height: 0.85;
   }
 
@@ -222,6 +235,99 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
       text-align: center;
     }
 
+  }
+
+  /* 年表の終わり。最後の月の線の続きを点線で下へ伸ばし、薄れて消える。
+     途中に次の月の数字を輪郭だけで置き、まだ作っている途中であることを見せる */
+  .tl-next {
+    margin-top: -40px;
+    padding-bottom: 32px;
+  }
+
+  .tl-next__inner {
+    position: relative;
+    width: min(100% - 40px, 1200px);
+    margin: 0 auto;
+    padding: 96px 0 160px;
+  }
+
+  .tl-next__inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 22px;
+    width: 2px;
+    background: repeating-linear-gradient(to bottom, var(--ink) 0 6px, transparent 6px 14px);
+    opacity: 0.5;
+    mask-image: linear-gradient(#000 55%, transparent);
+    transform-origin: top;
+    transition: scale 1400ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* 月の見出しと同じ大きさ・同じ置き方。白い地で線の上をふさぐ */
+  .tl-next__head {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: fit-content;
+    margin: 0;
+    padding: 16px 0;
+    background: var(--bg);
+    line-height: 0.85;
+  }
+
+  .tl-next__num {
+    font-family: var(--num);
+    font-size: clamp(96px, 26vw, 200px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: transparent;
+    -webkit-text-stroke: 2px var(--ink);
+  }
+
+  .tl-next__text {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .tl-next__num,
+  .tl-next__text {
+    transition:
+      opacity 600ms ease 500ms,
+      translate 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 500ms;
+  }
+
+  .tl-next__text {
+    transition-delay: 800ms;
+  }
+
+  :global(.js) .tl-next:not(.is-in) .tl-next__inner::before {
+    scale: 1 0;
+  }
+
+  :global(.js) .tl-next:not(.is-in) .tl-next__num {
+    opacity: 0;
+    translate: 0 0.3em;
+  }
+
+  :global(.js) .tl-next:not(.is-in) .tl-next__text {
+    opacity: 0;
+    translate: 0 12px;
+  }
+
+  @media (min-width: 900px) {
+    .tl-next__inner::before {
+      left: calc(50% - 1px);
+    }
+
+    .tl-next__head {
+      align-items: center;
+      margin: 0 auto;
+      padding: 24px;
+      text-align: center;
+    }
   }
 
   .foot {

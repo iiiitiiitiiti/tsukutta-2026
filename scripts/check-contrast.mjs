@@ -3,7 +3,7 @@
 // 使い方: 先に npm run build と npx astro preview を動かしてから
 //   npm run check:contrast [-- <URL>]   既定は http://localhost:4321/tsukutta-2026/
 // Chrome の場所は CHROME_PATH で上書きできる。
-// 背景は要素の背景色を親へたどって重ねて求める。背景画像・グラデーションは見ない（このページには無い）。
+// 背景は要素の背景色を親へたどって重ねて求める。背景画像・グラデーションは見ない。年表の帯のグラデーションとの差は別に計算する（docs/decisions/009・011）。
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -88,7 +88,9 @@ const audit = `(async () => {
     // 回る数字の帯の途中の桁と、使えないボタン（WCAG の対象外）は数えない
     if (el.closest('.counter__digit') || el.closest('button:disabled')) continue;
     const bg = bgOf(el);
-    const fgRaw = parse(cs.color);
+    // 塗りが透明で輪郭だけの文字（年表の終わりの「12」など）は、輪郭の色で見る
+    const outlined = parse(cs.color).a === 0 && parseFloat(cs.webkitTextStrokeWidth) >= 1;
+    const fgRaw = parse(outlined ? cs.webkitTextStrokeColor : cs.color);
     const fg = over({ ...fgRaw, a: fgRaw.a * opacityOf(el) }, bg);
     const x = lum(fg), y = lum(bg);
     const ratio = (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
