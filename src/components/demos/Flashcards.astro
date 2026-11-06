@@ -1,11 +1,12 @@
 ---
 // 暗記カードの小さな実物。本物の学習画面（見出し・進み具合の棒・めくれるカード・2択の評価・スワイプ・結果のゲージ）を写した。
-// 問題はこの年表そのものから作った3枚（ほかの人のクイズは載せない）。
+// 問題は手元のクイズのうち、問題集の欄が「自作」の3問（ほかの人のクイズは載せない）。
+// 補足は本物と同じく「別解・正誤判定基準・補足」の欄で、空なら出さない。
 // 次回の間隔は本物の計算（ts-fsrs の既定）で新規カードを評価したときの値
 const cards = [
-  { q: 'この年表でいちばん最初に作ったものは？', a: 'クイズ得点板', note: '4月11日' },
-  { q: '1日に3つ作った日は何月何日？', a: '10月19日', note: 'ひとつめ・うごき帳・問題集の下ごしらえ' },
-  { q: '動物園・水族館ログに入っている施設の数は？', a: '473施設', note: '7月13日に作った' },
+  { q: '料理で言われる「少々」と「ひとつまみ」のうち、一般に量が多いのはどちらでしょう？', a: 'ひとつまみ', note: '' },
+  { q: '特に味噌汁ではこの状態で火を止めると最も風味が出る、鍋で火にかけた水や出汁が煮立ち始めた瞬間のことを何というでしょう？', a: '煮えばな', note: '' },
+  { q: 'ヒンディー語で「舐める」という意味の言葉に由来する、インド料理に欠かせない調味料は何でしょう？', a: 'チャツネ', note: '◯：チャトゥニー' },
 ];
 ---
 <div class="fc" data-fc>
@@ -33,7 +34,7 @@ const cards = [
               <div class="fc__q" data-q2>{cards[0].q}</div>
               <hr />
               <div class="fc__a" data-a>{cards[0].a}</div>
-              <div class="fc__note" data-note>{cards[0].note}</div>
+              <div class="fc__note" data-note hidden={!cards[0].note}>{cards[0].note}</div>
             </div>
           </div>
         </div>
@@ -601,6 +602,7 @@ const cards = [
       $('[data-q2]').textContent = item.card.q;
       $('[data-a]').textContent = item.card.a;
       $('[data-note]').textContent = item.card.note;
+      $('[data-note]').hidden = !item.card.note;
       $('[data-new]').hidden = !item.isNew;
       $('[data-phase]').textContent = `フェーズ ${item.reps}`;
       const iv = intervals();

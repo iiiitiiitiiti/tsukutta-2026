@@ -1,7 +1,8 @@
 ---
 // 表紙の棚。18作のアイコンが作った順に上から落ちてきて、月の列に積み上がる。
 // 積み上がった高さがそのまま月ごとの作った数の棒グラフになる。
-// アイコンは年表のその項目へ、月の数字はその月の帯へのリンクで、目次も兼ねる
+// アイコンは年表のその項目へ、月の数字はその月の帯へのリンクで、目次も兼ねる。
+// 名前は吹き出しにせず、グラフ左上の空いた所に出す。吹き出しだと隣の列のアイコンに重なって読めなくなるため
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -24,7 +25,8 @@ const svgOf = (icon?: string) => {
   return p && existsSync(p) ? readFileSync(p, 'utf8').replace(/<!--[\s\S]*?-->/g, '') : '';
 };
 ---
-<nav class="chart" aria-label={`月ごとに作った数。全部で${tools.length}こ`} style={`--max: ${max}`}>
+<nav class="chart" aria-label={`月ごとに作った数。全部で${tools.length}こ`} style={`--max: ${max}`} data-chart>
+  <p class="chart__caption" aria-hidden="true" data-caption><span class="chart__cap-date" data-cap-date></span><span class="chart__cap-name" data-cap-name></span></p>
   <ol class="chart__cols">
     {months.map((m) => {
       const list = tools.filter((t) => t.month === m);
@@ -33,9 +35,9 @@ const svgOf = (icon?: string) => {
           <ol class="chart__stack">
             {list.map((t) => (
               <li class="chart__slot" style={`--i: ${tools.indexOf(t)}; --r: ${((tools.indexOf(t) * 37) % 50) - 25}deg`}>
-                <a class="chart__link" href={`#${t.anchor}`}>
+                <a class="chart__link" href={`#${t.anchor}`} data-date={`${m}.${String(t.day).padStart(2, '0')}`} data-name={t.name}>
                   <span class="chart__icon" aria-hidden="true" set:html={svgOf(t.icon)} />
-                  <span class="chart__name">{t.name}<span class="sr-only">（{m}月{t.day}日）</span></span>
+                  <span class="sr-only">{t.name}（{m}月{t.day}日）</span>
                 </a>
               </li>
             ))}
@@ -55,6 +57,7 @@ const svgOf = (icon?: string) => {
   .chart {
     --size: 34px;
     --gap: 4px;
+    position: relative;
     width: 100%;
   }
 
@@ -115,40 +118,44 @@ const svgOf = (icon?: string) => {
     stroke-width: 1.75;
   }
 
-  .chart__name {
-    position: absolute;
-    top: 50%;
-    left: calc(100% + 8px);
-    z-index: 2;
-    padding: 4px 10px;
-    border-radius: 6px;
-    background: var(--ink);
-    color: #fff;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.5;
-    white-space: nowrap;
-    translate: -4px -50%;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 150ms, translate 150ms;
-  }
-
-  .chart__col:nth-child(n + 6) .chart__name {
-    right: calc(100% + 8px);
-    left: auto;
-    translate: 4px -50%;
-  }
-
   .chart__link:hover .chart__icon,
   .chart__link:focus-visible .chart__icon {
     scale: 1.15;
+    box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--ink);
   }
 
-  .chart__link:hover .chart__name,
-  .chart__link:focus-visible .chart__name {
-    translate: 0 -50%;
+  /* 指した物の名前。グラフの左上は4〜8月の列が低くて空いているので、そこに出す */
+  .chart__caption {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    gap: 6px;
+    max-width: 60%;
+    margin: 0;
+    text-align: left;
+    opacity: 0;
+    translate: 0 8px;
+    transition: opacity 180ms, translate 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+  }
+
+  .chart__caption.is-on {
     opacity: 1;
+    translate: 0 0;
+  }
+
+  .chart__cap-date {
+    font-family: var(--num);
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .chart__cap-name {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.4;
   }
 
   .chart__month {
@@ -244,5 +251,34 @@ const svgOf = (icon?: string) => {
     .chart__unit {
       font-size: 13px;
     }
+
+    .chart__cap-date {
+      font-size: 32px;
+    }
+
+    .chart__cap-name {
+      font-size: 22px;
+    }
   }
 </style>
+
+<script>
+  for (const chart of document.querySelectorAll<HTMLElement>('[data-chart]')) {
+    const cap = chart.querySelector<HTMLElement>('[data-caption]')!;
+    const date = chart.querySelector<HTMLElement>('[data-cap-date]')!;
+    const name = chart.querySelector<HTMLElement>('[data-cap-name]')!;
+    const show = (a: Element | null) => {
+      if (!(a instanceof HTMLElement) || !a.dataset.name) return cap.classList.remove('is-on');
+      date.textContent = a.dataset.date ?? '';
+      name.textContent = a.dataset.name;
+      cap.classList.add('is-on');
+    };
+    for (const a of chart.querySelectorAll('.chart__link')) {
+      a.addEventListener('pointerenter', () => show(a));
+      a.addEventListener('pointerleave', () => show(chart.querySelector('.chart__link:focus-visible')));
+      // マウスで押したときのフォーカスでは出さない。飛んだ後も名前が残ってしまうため
+      a.addEventListener('focus', () => a.matches(':focus-visible') && show(a));
+      a.addEventListener('blur', () => show(null));
+    }
+  }
+</script>

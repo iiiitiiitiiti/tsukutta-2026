@@ -115,6 +115,13 @@ p + p {
   grid-area: head;
 }
 
+/* 落ちてくるアイコンは題と序文の後ろを通す。前を通ると文字が隠れる */
+.hero__head,
+.hero__body {
+  position: relative;
+  z-index: 1;
+}
+
 .hero__chart {
   grid-area: chart;
 }
@@ -147,9 +154,9 @@ p + p {
   color: var(--ink-soft);
 }
 
-/* 地の文の節（自己紹介・おわりに） */
+/* 地の文の節（自己紹介・おわりに）。長い文を読む所なので、表紙や年表より狭くする */
 .note {
-  width: min(100% - 40px, 1200px);
+  width: min(100% - 40px, 960px);
   margin: 0 auto;
   padding: 56px 0;
 }

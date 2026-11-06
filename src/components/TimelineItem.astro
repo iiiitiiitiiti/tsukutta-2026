@@ -23,8 +23,22 @@ const single = tools.length === 1 ? tools[0] : null;
 const counters = tools.filter((t) => t.counter);
 const demos = tools.filter((t) => t.demo);
 const shots = tools.filter((t) => !t.noShot);
+
+// 原稿の「- 語：説明」が続く所は定義リストに、「- 」だけなら箇条書きにまとめる
+type Block = { p: string } | { list: string[] };
+const blocks = paragraphs.reduce<Block[]>((acc, line) => {
+  if (!line.startsWith('- ')) return [...acc, { p: line }];
+  const last = acc.at(-1);
+  if (last && 'list' in last) last.list.push(line.slice(2));
+  else acc.push({ list: [line.slice(2)] });
+  return acc;
+}, []);
+const pair = (item: string) => {
+  const i = item.indexOf('：');
+  return i > 0 ? [item.slice(0, i), item.slice(i + 1)] : null;
+};
 ---
-<article class="item" id={anchor} data-side={side} data-first={first}>
+<article class="item" id={anchor} data-side={side} data-first={first} data-reveal>
   <span class="item__node" aria-hidden="true"></span>
   <div class="item__card">
     <p class="item__date"><span aria-hidden="true">{first && <><span class="item__m">{month}</span><span class="item__dot">.</span></>}<span class="item__d">{String(day).padStart(2, '0')}</span></span><span class="sr-only">{month}月{day}日</span></p>
@@ -60,10 +74,27 @@ const shots = tools.filter((t) => !t.noShot);
       </div>
     )}
 
-    <details class="item__more">
+    <details class="item__more" data-more>
       <summary class="item__summary"><span class="item__open">くわしく読む</span><span class="item__close">閉じる</span></summary>
       <div class="item__body">
-        <div class="item__text">{paragraphs.map((p) => <p>{p}</p>)}</div>
+        <div class="item__text">
+          {blocks.map((b) =>
+            'p' in b ? (
+              <p>{b.p}</p>
+            ) : b.list.every((x) => pair(x)) ? (
+              <dl class="item__dl">
+                {b.list.map((x) => (
+                  <div>
+                    <dt>{pair(x)![0]}</dt>
+                    <dd>{pair(x)![1]}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <ul class="item__ul">{b.list.map((x) => <li>{x}</li>)}</ul>
+            ),
+          )}
+        </div>
         {demos.map((t) => <Demo kind={t.demo!} />)}
         {shots.map((t) => <Shot id={t.id} alt={`${t.match}の画面`} variant="full" />)}
       </div>
@@ -250,15 +281,25 @@ const shots = tools.filter((t) => !t.noShot);
     display: inline;
   }
 
-  /* 開くときは高さを伸ばして見せる（対応していないブラウザではすぐ開く） */
-  .item__more::details-content {
-    height: 0;
-    overflow: clip;
-    transition: height 380ms cubic-bezier(0.2, 0.8, 0.2, 1), content-visibility 380ms allow-discrete;
+  /* スクロールで画面に入ったら、丸が膨らみ、札が下から上がってくる。
+     スクリプトが動かないときに隠れたままにならないよう、隠すのは html に .js が付いたときだけ */
+  :global(.js) .item:not(.is-in) .item__node {
+    scale: 0;
   }
 
-  .item__more[open]::details-content {
-    height: auto;
+  :global(.js) .item:not(.is-in) .item__card {
+    opacity: 0;
+    translate: 0 64px;
+  }
+
+  .item__node {
+    transition: scale 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 80ms;
+  }
+
+  .item__card {
+    transition:
+      opacity 700ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms,
+      translate 800ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms;
   }
 
   /* 全文は白い面にのせて、帯の色の上でも読みやすくする */
@@ -274,6 +315,45 @@ const shots = tools.filter((t) => !t.noShot);
 
   .item__text {
     max-width: 34em;
+  }
+
+  .item__dl,
+  .item__ul {
+    display: grid;
+    gap: 10px;
+    margin: 0.9em 0 0;
+    padding: 0;
+  }
+
+  .item__dl dt {
+    font-weight: 700;
+  }
+
+  .item__dl dd {
+    margin: 0;
+    color: var(--ink-soft);
+  }
+
+  .item__ul {
+    padding-left: 1.4em;
+  }
+
+  .item__dl + p,
+  .item__ul + p {
+    margin-top: 0.9em;
+  }
+
+  /* 開閉の動きはスクリプトで付ける。開いている間は、中身が上から順に浮かんで出る */
+  .item__body > * {
+    transition:
+      opacity 400ms ease calc(var(--n, 0) * 70ms + 120ms),
+      translate 500ms cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--n, 0) * 70ms + 120ms);
+  }
+
+  .item__more.is-entering .item__body > * {
+    opacity: 0;
+    translate: 0 20px;
+    transition: none;
   }
 
   /* 広い画面では中央の線をはさんで左右交互に置く */
@@ -360,3 +440,73 @@ const shots = tools.filter((t) => !t.noShot);
     }
   }
 </style>
+
+<script>
+  // スクロールで画面に入った項目に印を付ける。一度出したら戻さない
+  const seen = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        e.target.classList.add('is-in');
+        seen.unobserve(e.target);
+      }
+    },
+    { rootMargin: '0px 0px -10% 0px' },
+  );
+  document.querySelectorAll('[data-reveal]').forEach((el) => seen.observe(el));
+
+  // 「くわしく読む」の開閉。高さを伸び縮みさせ、開くときは中身を順に浮かばせる。
+  // details の素の開閉は一瞬で切り替わるので、押されたら止めて自分で動かす
+  const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+  for (const more of document.querySelectorAll<HTMLDetailsElement>('[data-more]')) {
+    const summary = more.querySelector('summary')!;
+    const body = more.querySelector<HTMLElement>('.item__body')!;
+    [...body.children].forEach((c, i) => (c as HTMLElement).style.setProperty('--n', String(i)));
+    let run: Animation | null = null;
+    // 古いブラウザは動きの中の overflow を無視するので、動いている間だけ要素に付ける
+    const done = () => {
+      run = null;
+      body.style.overflow = '';
+    };
+
+    summary.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const from = run ? body.getBoundingClientRect().height : null;
+      run?.cancel();
+      done();
+      body.style.overflow = 'clip';
+      const closing = more.open && !more.classList.contains('is-closing');
+      if (closing) {
+        more.classList.add('is-closing');
+        const h = from ?? body.getBoundingClientRect().height;
+        run = body.animate(
+          [
+            { height: `${h}px`, opacity: 1 },
+            { height: '0px', opacity: 0 },
+          ],
+          { duration: 360, easing: EASE },
+        );
+        run.onfinish = () => {
+          more.open = false;
+          more.classList.remove('is-closing');
+          done();
+        };
+        return;
+      }
+      more.classList.remove('is-closing');
+      more.classList.add('is-entering');
+      more.open = true;
+      const h = body.getBoundingClientRect().height;
+      body.getBoundingClientRect();
+      more.classList.remove('is-entering');
+      run = body.animate(
+        [
+          { height: `${from ?? 0}px` },
+          { height: `${h}px` },
+        ],
+        { duration: 520, easing: EASE },
+      );
+      run.onfinish = done;
+    });
+  }
+</script>

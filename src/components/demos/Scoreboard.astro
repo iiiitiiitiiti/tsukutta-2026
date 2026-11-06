@@ -31,9 +31,8 @@ const N = 2;
         <p class="qs__name" data-name>{name}</p>
         <div class="qs__badges" data-badges></div>
         <div class="qs__score" aria-hidden="true">
-          <span class="qs__mk qs__ok">○</span><span class="qs__num qs__ok" data-c>0</span><span class="qs__max qs__ok-dim">/{M}</span>
-          <span class="qs__divider"></span>
-          <span class="qs__mk qs__ng">✕</span><span class="qs__num qs__ng" data-w>0</span><span class="qs__max qs__ng-dim">/{N}</span>
+          <span class="qs__line"><span class="qs__mk qs__ok">○</span><span class="qs__num qs__ok" data-c>0</span><span class="qs__max qs__ok-dim">/{M}</span></span>
+          <span class="qs__line"><span class="qs__mk qs__ng">✕</span><span class="qs__num qs__ng" data-w>0</span><span class="qs__max qs__ng-dim">/{N}</span></span>
         </div>
         <div class="qs__buttons">
           <button type="button" class="qs__btn qs__btn--ok" data-hit="correct" aria-label={`${name} に○`}>○</button>
@@ -308,13 +307,20 @@ const N = 2;
     color: #b91c1c;
   }
 
+  /* 本物は○と✕を横に並べるが、見本のカードは狭くて枠からはみ出すので縦に積む */
   .qs__score {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    height: 56px;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding: 6px 0;
     line-height: 1;
     font-variant-numeric: tabular-nums;
+  }
+
+  .qs__line {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
   }
 
   .qs__mk {
@@ -347,13 +353,6 @@ const N = 2;
 
   .qs__ng-dim {
     color: #b91c1c;
-  }
-
-  .qs__divider {
-    width: 1px;
-    height: 28px;
-    margin: 0 4px;
-    background: var(--edge);
   }
 
   .qs__num.is-bump {

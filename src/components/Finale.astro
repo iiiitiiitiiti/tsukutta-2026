@@ -1,366 +1,265 @@
 ---
-// 締めの得点板。本物のクイズ得点板の解答者カードの見た目で、今年作った数を出す。
-// トロフィーを押すと、本物と同じく紙吹雪の WINNER 画面が開く
-interface Props {
-  count: number;
+// 締めのエンドロール。画面に入ると、作った物を作った順に流し、最後に作った人の名前と作った数で止まる。
+// 自動で動く文なので、止める・もう一度流すボタンを付ける（5秒を超えて動くものは止められるようにする）
+interface Tool {
+  name: string;
+  month: number;
+  day: number;
 }
-const { count } = Astro.props;
+interface Props {
+  tools: Tool[];
+}
+const { tools } = Astro.props;
+const credits = [
+  ['企画・注文', 'わたし'],
+  ['制作', 'Claude'],
+  ['書体', 'Noto Sans JP／Oswald'],
+  ['アイコン', 'Lucide'],
+];
 ---
-<section class="fin" aria-labelledby="fin-head">
-  <h2 class="sr-only" id="fin-head">今年の得点</h2>
-  <div class="fin__card" data-fin>
-    <button type="button" class="fin__trophy" data-open aria-label="優勝者を発表する">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg>
-    </button>
-    <p class="fin__name">2026年</p>
-    <p class="fin__badge-row"><span class="fin__badge">1抜け</span></p>
-    <p class="fin__score" aria-live="polite"><span data-score>{count}</span><span class="sr-only">こ</span></p>
-    <p class="fin__sub">4月から11月までに作ったもの</p>
-    <div class="fin__buttons">
-      <button type="button" class="fin__btn fin__btn--minus" data-step="-1">−1</button>
-      <button type="button" class="fin__btn fin__btn--plus" data-step="1">+1</button>
-    </div>
-  </div>
-
-  <div class="win" data-win hidden>
-    <canvas class="win__confetti" data-confetti aria-hidden="true"></canvas>
-    <button type="button" class="win__x" data-x aria-label="閉じる">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-    </button>
-    <div class="win__card" role="dialog" aria-modal="true" aria-labelledby="win-name">
-      <p class="win__cup" aria-hidden="true">🏆</p>
-      <div>
-        <p class="win__label">W I N N E R</p>
-        <p class="win__name" id="win-name">2026年</p>
+<section class="roll" aria-labelledby="roll-head" data-endroll>
+  <div class="roll__frame" data-roll-frame>
+    <div class="roll__list" data-roll-list>
+      <h2 class="roll__head" id="roll-head">今年つくったもの</h2>
+      <dl class="roll__rows">
+        {tools.map((t) => (
+          <div class="roll__row">
+            <dt class="roll__date"><span aria-hidden="true">{t.month}.{String(t.day).padStart(2, '0')}</span><span class="sr-only">{t.month}月{t.day}日</span></dt>
+            <dd class="roll__name">{t.name}</dd>
+          </div>
+        ))}
+      </dl>
+      <dl class="roll__rows roll__rows--credit">
+        {credits.map(([role, who]) => (
+          <div class="roll__row">
+            <dt class="roll__role">{role}</dt>
+            <dd class="roll__name">{who}</dd>
+          </div>
+        ))}
+      </dl>
+      <div class="roll__end" data-roll-end>
+        <p class="roll__year">2026</p>
+        <p class="roll__total"><span class="roll__num">{tools.length}</span><span class="roll__unit">こ作った</span></p>
+        <p class="roll__fin">おわり</p>
       </div>
-      <p class="win__pill"><span data-win-score>{count}</span> 点</p>
-      <button type="button" class="win__back" data-close>スコアボードに戻る</button>
     </div>
   </div>
+  <button type="button" class="roll__ctl" data-roll-ctl hidden>止める</button>
 </section>
 
 <style>
-  /* 本物の得点板の色。背景・カード・枠・アンバー・文字・薄い文字 */
-  .fin {
-    --stage: #f1f5f9;
-    --panel: #ffffff;
-    --edge: #e2e8f0;
-    --lamp: #d97706;
-    --qs-ink: #1e293b;
-    --qs-dim: #64748b;
-
-    display: grid;
-    place-items: center;
-    padding: 96px 20px;
-    background: var(--stage);
+  .roll {
+    position: relative;
+    background: var(--ink);
+    color: #fff;
   }
 
-  .fin__card {
+  .roll__frame {
     position: relative;
+    padding: 96px 20px;
+  }
+
+  .roll__list {
     display: grid;
     justify-items: center;
-    width: min(100%, 280px);
-    padding: 16px;
-    border: 1px solid var(--edge);
-    border-radius: 16px;
-    background: var(--panel);
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    color: var(--qs-ink);
-    text-align: center;
+    gap: 72px;
+    width: min(100%, 720px);
+    margin: 0 auto;
   }
 
-  .fin__trophy {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--qs-dim);
-    cursor: pointer;
-  }
-
-  .fin__trophy svg {
-    width: 16px;
-    height: 16px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .fin__trophy:hover {
-    color: var(--lamp);
-  }
-
-  .fin__name {
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 1.6;
-  }
-
-  .fin__badge-row {
-    display: grid;
-    place-items: center;
-    height: 24px;
+  .roll__head {
     margin: 0;
-  }
-
-  .fin__badge {
-    padding: 0 8px;
-    border-radius: 999px;
-    background: #fef3c7;
-    color: #92400e;
-    font-size: 12px;
+    font-size: clamp(22px, 4vw, 30px);
     font-weight: 700;
-    line-height: 1.6;
+    letter-spacing: 0.12em;
   }
 
-  .fin__score {
+  /* 映画の終わりの字幕と同じく、中央の溝をはさんで左に役割（日付）、右に名前 */
+  .roll__rows {
     display: grid;
-    place-items: center;
-    height: 56px;
+    gap: 18px;
+    width: 100%;
     margin: 0;
-    color: var(--lamp);
-    font-size: 48px;
-    font-weight: 900;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-    text-shadow: 0 0 24px rgba(217, 119, 6, 0.25);
   }
 
-  .fin__sub {
-    margin: 4px 0 12px;
-    color: var(--qs-dim);
-    font-size: 14px;
-  }
-
-  .fin__buttons {
+  .roll__row {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    gap: 0 28px;
+    align-items: baseline;
+  }
+
+  .roll__date,
+  .roll__role {
+    text-align: right;
+  }
+
+  .roll__date {
+    font-family: var(--num);
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  .roll__role {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+
+  .roll__name {
+    margin: 0;
+    font-size: clamp(16px, 2.6vw, 20px);
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .roll__rows--credit .roll__name {
+    font-size: clamp(18px, 3vw, 24px);
+  }
+
+  .roll__end {
+    display: grid;
+    justify-items: center;
     gap: 8px;
-    width: 100%;
-  }
-
-  .fin__btn {
-    min-height: 44px;
-    border: 1px solid var(--edge);
-    border-radius: 12px;
-    font: inherit;
-    font-size: 20px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .fin__btn:active {
-    scale: 0.95;
-  }
-
-  .fin__btn--minus {
-    background: #f1f5f9;
-    color: #475569;
-  }
-
-  .fin__btn--plus {
-    border-color: var(--lamp);
-    background: var(--lamp);
-    color: #fff;
-  }
-
-  /* WINNER 画面。本物の WinnerOverlay の値を写した */
-  .win {
-    position: fixed;
-    inset: 0;
-    z-index: 50;
-    display: grid;
-    place-items: center;
-    padding: 16px;
-    background: linear-gradient(135deg, rgb(10 10 40 / 0.92) 0%, rgb(40 10 60 / 0.95) 100%);
-    animation: win-in 300ms ease-out;
-  }
-
-  .win[hidden] {
-    display: none;
-  }
-
-  .win__confetti {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-  }
-
-  .win__x {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    z-index: 2;
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    border: 0;
-    border-radius: 50%;
-    background: rgb(255 255 255 / 0.1);
-    color: #fff;
-    cursor: pointer;
-  }
-
-  .win__x:hover {
-    background: rgb(255 255 255 / 0.2);
-  }
-
-  .win__x svg {
-    width: 20px;
-    height: 20px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-  }
-
-  .win__card {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    width: min(100%, 384px);
-    padding: 48px 40px;
-    border: 2px solid rgb(255 215 0 / 0.4);
-    border-radius: 24px;
-    background: linear-gradient(160deg, #1a1a3e 0%, #2d1b4e 100%);
-    box-shadow: 0 0 60px rgb(255 215 0 / 0.2), 0 20px 60px rgb(0 0 0 / 0.5);
+    padding-top: 48px;
     text-align: center;
-    animation: card-in 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  .win__cup {
-    font-size: 72px;
-    line-height: 1;
-    filter: drop-shadow(0 0 20px rgb(255 215 0 / 0.8));
-  }
-
-  .win__label {
-    margin-bottom: 8px;
-    color: rgb(255 215 0 / 0.7);
-    font-size: 12px;
-    font-weight: 700;
+  .roll__year {
+    font-family: var(--num);
+    font-size: 28px;
+    font-weight: 500;
     letter-spacing: 0.3em;
+    line-height: 1;
   }
 
-  .win__name {
-    color: #ffd700;
-    font-size: 36px;
-    font-weight: 700;
-    line-height: 1.25;
-    text-shadow: 0 0 30px rgb(255 215 0 / 0.6), 0 2px 4px rgb(0 0 0 / 0.5);
+  .roll__total {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
   }
 
-  .win__pill {
-    padding: 8px 24px;
-    border: 1px solid rgb(255 215 0 / 0.3);
-    border-radius: 999px;
-    background: rgb(255 215 0 / 0.15);
-    color: #ffe55c;
+  .roll__num {
+    font-family: var(--num);
+    font-size: clamp(120px, 26vw, 200px);
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .roll__unit {
     font-size: 20px;
     font-weight: 700;
   }
 
-  .win__back {
-    margin-top: 8px;
-    padding: 10px 32px;
-    border: 1px solid rgb(255 255 255 / 0.2);
+  .roll__fin {
+    margin-top: 32px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5em;
+  }
+
+  /* スクリプトが動くときだけ、枠を画面の高さに固定して中で流す。上下の端は帯の色へ溶かす */
+  :global(.js) .roll__frame {
+    height: min(100svh, 900px);
+    padding: 0 20px;
+    overflow: hidden;
+    mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
+  }
+
+  :global(.js) .roll__list {
+    position: absolute;
+    top: 0;
+    right: 20px;
+    left: 20px;
+    translate: 0 var(--y, 100%);
+    will-change: translate;
+  }
+
+  .roll__ctl {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    min-width: 96px;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 2px solid #fff;
     border-radius: 999px;
-    background: rgb(255 255 255 / 0.1);
-    color: rgb(255 255 255 / 0.75);
+    background: var(--ink);
+    color: #fff;
     font: inherit;
     font-size: 14px;
-    font-weight: 600;
-    white-space: nowrap;
+    font-weight: 700;
     cursor: pointer;
+    transition: background-color 150ms, color 150ms;
   }
 
-  .win__back:hover {
-    background: rgb(255 255 255 / 0.18);
+  .roll__ctl:hover {
+    background: #fff;
+    color: var(--ink);
   }
 
-  .win :focus-visible {
+  .roll__ctl:focus-visible {
     outline-color: #fff;
-  }
-
-  @keyframes win-in {
-    from {
-      opacity: 0;
-    }
-  }
-
-  @keyframes card-in {
-    from {
-      scale: 0.6;
-      opacity: 0;
-    }
   }
 </style>
 
 <script>
-  import { launchConfetti } from '../lib/confetti';
+  // 1秒に流す長さ。映画の字幕くらいの速さ
+  const SPEED = 80;
 
-  document.querySelectorAll<HTMLElement>('.fin').forEach((root) => {
-    const score = root.querySelector<HTMLElement>('[data-score]')!;
-    const win = root.querySelector<HTMLElement>('[data-win]')!;
-    const winScore = root.querySelector<HTMLElement>('[data-win-score]')!;
-    const canvas = root.querySelector<HTMLCanvasElement>('[data-confetti]')!;
-    const opener = root.querySelector<HTMLButtonElement>('[data-open]')!;
-    const back = root.querySelector<HTMLButtonElement>('[data-close]')!;
-    let stop = () => {};
+  for (const roll of document.querySelectorAll<HTMLElement>('[data-endroll]')) {
+    const frame = roll.querySelector<HTMLElement>('[data-roll-frame]')!;
+    const list = roll.querySelector<HTMLElement>('[data-roll-list]')!;
+    const end = roll.querySelector<HTMLElement>('[data-roll-end]')!;
+    const ctl = roll.querySelector<HTMLButtonElement>('[data-roll-ctl]')!;
+    let run: Animation | null = null;
 
-    root.querySelectorAll<HTMLButtonElement>('[data-step]').forEach((b) =>
-      b.addEventListener('click', () => {
-        score.textContent = String(Number(score.textContent) + Number(b.dataset.step));
-      }),
-    );
+    // 止まる所は「おわり」の塊が枠の真ん中に来る位置
+    const stopAt = () => frame.clientHeight / 2 - (end.offsetTop + end.offsetHeight / 2);
 
-    const close = () => {
-      if (win.hidden) return;
-      stop();
-      win.hidden = true;
-      document.documentElement.style.overflow = '';
-      opener.focus();
+    const play = () => {
+      run?.cancel();
+      const fh = frame.clientHeight;
+      const stop = stopAt();
+      run = list.animate([{ translate: `0 ${fh}px` }, { translate: `0 ${stop}px` }], {
+        duration: ((fh - stop) / SPEED) * 1000,
+        easing: 'cubic-bezier(0.3, 0, 0.2, 1)',
+        fill: 'forwards',
+      });
+      ctl.hidden = false;
+      ctl.textContent = '止める';
+      run.onfinish = () => (ctl.textContent = 'もう一度流す');
     };
 
-    opener.addEventListener('click', () => {
-      winScore.textContent = score.textContent;
-      win.hidden = false;
-      document.documentElement.style.overflow = 'hidden';
-      back.focus();
-      stop = launchConfetti(canvas);
+    // 流し終えた後に画面の高さが変わったら、「おわり」の塊を枠の真ん中に置き直す
+    window.addEventListener('resize', () => {
+      if (run?.playState !== 'finished') return;
+      run.cancel();
+      run = list.animate([{ translate: `0 ${stopAt()}px` }], { duration: 0, fill: 'forwards' });
+      run.onfinish = null;
     });
-    back.addEventListener('click', close);
-    root.querySelector('[data-x]')!.addEventListener('click', close);
-    // 本物と同じく、カードの外を押しても閉じる
-    win.addEventListener('click', (e) => {
-      if (e.target === win || e.target === canvas) close();
-    });
-    // 開いている間は Tab で外へ出ない（× と「戻る」の2つを行き来する）
-    win.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') close();
-      if (e.key !== 'Tab') return;
-      const x = root.querySelector<HTMLButtonElement>('[data-x]')!;
-      if (e.shiftKey && document.activeElement === x) {
-        e.preventDefault();
-        back.focus();
-      } else if (!e.shiftKey && document.activeElement === back) {
-        e.preventDefault();
-        x.focus();
+
+    ctl.addEventListener('click', () => {
+      if (!run || run.playState === 'finished') return play();
+      if (run.playState === 'paused') {
+        run.play();
+        ctl.textContent = '止める';
+      } else {
+        run.pause();
+        ctl.textContent = '続きを流す';
       }
     });
-  });
+
+    // 枠が4割ほど見えたら流し始める。一度流したら、あとはボタンで流し直す
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        play();
+      },
+      { threshold: 0.35 },
+    );
+    io.observe(frame);
+  }
 </script>

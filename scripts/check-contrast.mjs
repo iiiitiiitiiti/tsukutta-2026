@@ -40,6 +40,8 @@ const cleanup = () => {
 // 全文を開くと中の見本の出だしの動き（透明から始まる）が走るので、終わるまで1.5秒待ってから測る
 const audit = `(async () => {
   document.querySelectorAll('details').forEach((d) => (d.open = true));
+  // スクロールで現れる項目は、画面の外にあるうちは透明なので、先に全部出してから測る
+  document.querySelectorAll('[data-reveal]').forEach((e) => e.classList.add('is-in'));
   await new Promise((r) => setTimeout(r, 1500));
   const cv = document.createElement('canvas');
   cv.width = cv.height = 1;
