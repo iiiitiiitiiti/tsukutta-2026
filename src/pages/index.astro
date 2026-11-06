@@ -80,8 +80,8 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     ))}
 
     <main class="tl">
-      {monthSections.map((s) => (
-        <section class="tl-month" id={`m${s.month}`} data-month={s.month} aria-labelledby={`mh${s.month}`}>
+      {monthSections.map((s, i) => (
+        <section class="tl-month" id={`m${s.month}`} data-month={s.month} aria-labelledby={`mh${s.month}`} style={`--c-next: ${monthSections[i + 1] ? `var(--m${monthSections[i + 1].month})` : 'var(--bg)'}`}>
           <div class="tl-month__inner">
             <h2 class="tl-month__head" id={`mh${s.month}`} data-reveal>
               <span class="tl-month__name"><span class="tl-month__num">{s.month}</span><span class="tl-month__unit">月</span></span>
@@ -111,10 +111,14 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
 </html>
 
 <style>
-  /* 月ごとに、その月の色で塗った帯を横いっぱいに敷く */
+  /* 月ごとに、その月の色で塗った帯を横いっぱいに敷く。月の見出しの所はその月の色のまま置き、
+     そこから下へ次の月の色へ移していく。帯の境目で色がつながり、季節が移るように見える */
   .tl-month {
+    /* 色を変え始める所。月の見出しの箱（上の余白＋大きな数字＋添え書き）の下端より少し下に置く */
+    --hold: calc(88px + clamp(96px, 26vw, 200px) * 0.85 + 80px);
     padding: 88px 0 40px;
-    background: var(--c);
+    background: var(--c) linear-gradient(var(--c) var(--hold), var(--c-next));
+    background: var(--c) linear-gradient(in oklab, var(--c) var(--hold), var(--c-next));
     color: var(--on-c);
   }
 
@@ -196,6 +200,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
 
   @media (min-width: 900px) {
     .tl-month {
+      --hold: calc(104px + clamp(96px, 26vw, 200px) * 0.85 + 80px);
       padding-top: 104px;
     }
 

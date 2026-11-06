@@ -3,6 +3,10 @@
   --surface: #ffffff;
   --ink: #1c2433;
   --ink-soft: #5b6475;
+  /* 長い文の色。見出しの --ink より少しだけ薄くする。薄い灰色にすると読みにくい */
+  --ink-body: #333c4c;
+  /* 浮かせる物（スクショの小窓・開いた全文）だけに付ける影。真下の薄い影と、広くやわらかい影の2段 */
+  --float: 0 1px 2px rgb(28 36 51 / 0.06), 0 16px 32px -16px rgb(28 36 51 / 0.3);
   --rule: #d5d9e0;
   --empty: #e2e5ea;
 
@@ -18,13 +22,15 @@
   color-scheme: light;
 }
 
-/* 帯はライトトーンにして、上の文字は全部の月で黒にする */
-[data-month='4'] { --c: #f7a985; --ci: #bf4518; }
-[data-month='7'] { --c: #a9d39b; --ci: #3d7a65; }
-[data-month='8'] { --c: #f6cf5c; --ci: #946600; }
-[data-month='9'] { --c: #86cdc6; --ci: #136170; }
-[data-month='10'] { --c: #a7b8ec; --ci: #2f4b8f; }
-[data-month='11'] { --c: #c3c5cc; --ci: #3c3f45; }
+/* 帯はライトトーンにして、上の文字は全部の月で黒にする。
+   月の色は --m4 などにも置き、年表の帯が次の月の色を呼べるようにする */
+:root { --m4: #f7a985; --m7: #a9d39b; --m8: #f6cf5c; --m9: #86cdc6; --m10: #a7b8ec; --m11: #c3c5cc; }
+[data-month='4'] { --c: var(--m4); --ci: #bf4518; }
+[data-month='7'] { --c: var(--m7); --ci: #3d7a65; }
+[data-month='8'] { --c: var(--m8); --ci: #946600; }
+[data-month='9'] { --c: var(--m9); --ci: #136170; }
+[data-month='10'] { --c: var(--m10); --ci: #2f4b8f; }
+[data-month='11'] { --c: var(--m11); --ci: #3c3f45; }
 
 *,
 *::before,
@@ -56,6 +62,14 @@ img {
 
 p {
   margin: 0;
+}
+
+/* 見出しは約物の空きを詰め、言葉の途中では折り返さない */
+h1,
+h2,
+h3 {
+  font-feature-settings: 'palt';
+  word-break: auto-phrase;
 }
 
 p + p {
@@ -98,12 +112,12 @@ p + p {
   font-size: clamp(24px, 4.4vw, 34px);
   font-weight: 700;
   line-height: 1.5;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
 }
 
-/* 題は区切った塊の間でだけ折り返す */
+/* 題は区切った塊ごとに行を分ける */
 .hero__title span {
-  display: inline-block;
+  display: block;
 }
 
 .hero__top {
@@ -152,7 +166,7 @@ p + p {
 
 .hero__body {
   grid-area: body;
-  color: var(--ink-soft);
+  color: var(--ink-body);
 }
 
 /* 地の文の節（自己紹介・おわりに）。長い文を読む所なので、表紙や年表より狭くする */
@@ -167,11 +181,11 @@ p + p {
   text-align: center;
   font-size: 20px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
 }
 
 .note__body {
-  color: var(--ink-soft);
+  color: var(--ink-body);
 }
 
 .cover-shot {
