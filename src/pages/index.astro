@@ -11,6 +11,7 @@ import Shot from '../components/Shot.astro';
 import HeroShelf from '../components/HeroShelf.astro';
 import Finale from '../components/Finale.astro';
 import AdventNav from '../components/AdventNav.astro';
+import advent from '../data/advent.json';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -43,6 +44,8 @@ const titleParts = timeline.title.includes('を') ? [timeline.title.slice(0, tim
 const lastShown = monthSections.at(-1)!.month;
 const nextLabel = lastShown < 12 ? `${lastShown + 1}` : '2027';
 const nextText = lastShown < 12 ? `${lastShown + 1}月へつづく` : '来年へつづく';
+// この記事が入っているアドベントカレンダーの企画。表紙の題の下に一言で出す
+const mine = advent.calendars.find((c) => 'mine' in c && c.mine)!;
 const arrowUp = readFileSync(resolve(process.cwd(), 'node_modules/lucide-static/icons/arrow-up.svg'), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
 const description = `Webデザイナーが今年AIに頼んで作ったアプリやページ${total}件を、作った日の順に並べた年表。`;
 ---
@@ -69,6 +72,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
         <div class="hero__head">
           <p class="hero__year" aria-hidden="true">2026</p>
           <h1 class="hero__title">{titleParts.map((t) => <span>{t}</span>)}</h1>
+          <p class="hero__advent">この記事は<a href={mine.url}>{mine.name}</a>の{Number(advent.day.split('-')[2])}日目です。</p>
         </div>
         <div class="hero__chart"><HeroShelf tools={shelf} /></div>
         <div class="hero__body">{intro.paragraphs.map((p) => <p>{p}</p>)}</div>

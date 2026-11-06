@@ -123,6 +123,21 @@ p + p {
   letter-spacing: 0.02em;
 }
 
+/* 題の下の一言。どのアドベントカレンダーの何日目の記事か */
+.hero__advent {
+  margin: 0;
+  color: var(--ink-body);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.hero__advent a {
+  padding-block: 3px;
+  color: var(--ink);
+  font-weight: 700;
+  text-underline-offset: 0.2em;
+}
+
 /* 題は区切った塊ごとに行を分ける */
 .hero__title span {
   display: block;
@@ -160,7 +175,7 @@ p + p {
   }
 
   .hero__head .hero__title {
-    margin-bottom: 0;
+    margin-bottom: 16px;
   }
 
   .hero__chart {

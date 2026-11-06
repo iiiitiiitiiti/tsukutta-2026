@@ -11,17 +11,22 @@ interface Props {
   tools: Tool[];
 }
 const { tools } = Astro.props;
-const credits = [
-  ['企画・注文', 'がーさん'],
+// 映画の終わりと同じく、作った物を「出演」として流し、そのあとにスタッフ・スペシャルサンクス・製作を大げさに並べる
+const staff = [
+  ['監督・主演・注文', 'がーさん'],
   ['制作', 'Claude'],
+  ['記録', 'Worklog'],
   ['書体', 'Noto Sans JP／Oswald'],
   ['アイコン', 'Lucide'],
 ];
+const thanks = ['約3万問のクイズを作ったみなさん', '全国の動物園と水族館', '最初の1種のホシハジロ', 'ウクレレとハワイ', '読んでくれたあなた'];
+const committee = ['ゆる民俗学・音楽学ラジオ 非公式', '〜壁達の福音：Q〜', 'Advent Calendar 2026', '制作委員会'];
 ---
 <section class="roll" aria-labelledby="roll-head" data-endroll>
   <div class="roll__frame" data-roll-frame>
     <div class="roll__list" data-roll-list>
       <h2 class="roll__head" id="roll-head" data-roll-head>今年つくったもの</h2>
+      <p class="roll__label">出演</p>
       <dl class="roll__rows">
         {tools.map((t) => (
           <div class="roll__row">
@@ -30,14 +35,22 @@ const credits = [
           </div>
         ))}
       </dl>
-      <dl class="roll__rows roll__rows--credit">
-        {credits.map(([role, who]) => (
-          <div class="roll__row">
+      <dl class="roll__staff">
+        {staff.map(([role, who]) => (
+          <div class="roll__credit">
             <dt class="roll__role">{role}</dt>
-            <dd class="roll__name">{who}</dd>
+            <dd class="roll__who">{who}</dd>
           </div>
         ))}
       </dl>
+      <div class="roll__credit">
+        <p class="roll__role">スペシャルサンクス</p>
+        <ul class="roll__thanks">{thanks.map((t) => <li>{t}</li>)}</ul>
+      </div>
+      <div class="roll__credit">
+        <p class="roll__role">製作</p>
+        <p class="roll__committee">{committee.map((t) => <span>{t}</span>)}</p>
+      </div>
     </div>
     <div class="roll__end" data-roll-end>
       <p class="roll__year">2026</p>
@@ -82,23 +95,32 @@ const credits = [
     text-indent: 0.24em;
   }
 
-  /* 映画の終わりの字幕と同じく、中央の溝をはさんで左に役割（日付）、右に名前 */
+  /* 出演の欄。映画の終わりの字幕と同じく、溝をはさんで左に日付、右に名前を置く。
+     溝を画面の真ん中に置くと、日付が短く名前が長いぶん塊が右へ寄って見える。
+     日付と名前の塊ごと真ん中に置き、目で見て真ん中に来るようにする */
   .roll__rows {
     display: grid;
-    gap: 14px;
-    width: 100%;
+    grid-template-columns: auto minmax(0, auto);
+    justify-content: center;
+    gap: 14px 28px;
     margin: 0;
   }
 
   .roll__row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0 32px;
-    align-items: baseline;
+    display: contents;
   }
 
-  .roll__date,
-  .roll__role {
+  .roll__label {
+    margin: 0 0 -40px;
+    color: #a3a3a3;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.4em;
+    text-indent: 0.4em;
+  }
+
+  .roll__date {
+    align-self: baseline;
     color: #a3a3a3;
     text-align: right;
   }
@@ -110,13 +132,8 @@ const credits = [
     letter-spacing: 0.08em;
   }
 
-  .roll__role {
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.16em;
-  }
-
   .roll__name {
+    align-self: baseline;
     margin: 0;
     font-size: clamp(15px, 2.4vw, 19px);
     font-weight: 500;
@@ -124,13 +141,53 @@ const credits = [
     letter-spacing: 0.04em;
   }
 
-  .roll__rows--credit {
-    gap: 28px;
+  /* スタッフから先は、役割を上に小さく、名前を下に大きく、1つずつ真ん中に積む */
+  .roll__staff {
+    display: grid;
+    gap: 44px;
+    margin: 0;
   }
 
-  .roll__rows--credit .roll__name {
+  .roll__credit {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .roll__role {
+    margin: 0;
+    color: #a3a3a3;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-indent: 0.16em;
+  }
+
+  .roll__who {
+    margin: 0;
     font-size: clamp(18px, 3vw, 24px);
     font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .roll__thanks {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: clamp(15px, 2.4vw, 19px);
+    font-weight: 500;
+  }
+
+  .roll__committee {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    font-size: clamp(18px, 3vw, 24px);
+    font-weight: 700;
+    line-height: 1.4;
   }
 
   .roll__end {
@@ -250,12 +307,34 @@ const credits = [
     const head = roll.querySelector<HTMLElement>('[data-roll-head]')!;
     const end = roll.querySelector<HTMLElement>('[data-roll-end]')!;
     const fin = roll.querySelector<HTMLElement>('[data-roll-fin]')!;
+    const cast = roll.querySelector<HTMLElement>('.roll__rows')!;
     const ctl = roll.querySelector<HTMLButtonElement>('[data-roll-ctl]')!;
     let runs: Animation[] = [];
     let played = false;
 
+    // 出演欄を目で見て真ん中に置く。外枠の真ん中に置くと、一番長い名前に引っぱられて大半の行が左に寄って見え、
+    // 行ごとの真ん中の平均に置くと、長い名前が右へはみ出して見える。その中間に置き、枠からは出さない
+    const centerCast = () => {
+      cast.style.translate = '';
+      const box = cast.getBoundingClientRect();
+      const area = list.getBoundingClientRect();
+      const dates = [...cast.querySelectorAll('.roll__date [aria-hidden]')].map((e) => e.getBoundingClientRect().left);
+      const ends = [...cast.querySelectorAll('.roll__name')].map((e) => {
+        const r = document.createRange();
+        r.selectNodeContents(e);
+        return r.getBoundingClientRect().right;
+      });
+      const left = Math.min(...dates);
+      const right = Math.max(...ends);
+      const rowMid = dates.reduce((sum, d, i) => sum + (d + ends[i]) / 2, 0) / dates.length;
+      const want = area.left + area.width / 2 - ((left + right) / 2 + rowMid) / 2;
+      const shift = Math.max(area.left - box.left, Math.min(area.right - box.right, want));
+      cast.style.translate = `${Math.round(shift)}px 0`;
+    };
+
     // 位置はすべて枠の上端からの距離（px）
     const measure = () => {
+      centerCast();
       const h = frame.clientHeight;
       // 題の札は枠の真ん中から始め、その下の行は枠の下の端のすぐ外に置く
       head.style.marginBottom = '0px';

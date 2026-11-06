@@ -1,6 +1,7 @@
 ---
-// アドベントカレンダーの前の日と次の日の記事。中身は src/data/advent.json に書く。
-// 担当者・題・リンクのどれかが空のうちは、押せない「準備中」の札として出す
+// アドベントカレンダーの前後の記事。同時に開いている3つの企画を並べる。
+// この記事の企画（mine）は前の日と次の日、ほかの2つは前の日・同じ日・次の日。中身は src/data/advent.json に書く。
+// 担当者・題・リンクがそろうと押せる札になる。担当者だけなら「準備中」、担当者もいなければ「まだ空いている日」と出す
 import advent from '../data/advent.json';
 
 interface Entry {
@@ -9,11 +10,17 @@ interface Entry {
   title: string;
   url: string;
 }
+interface Calendar {
+  name: string;
+  url: string;
+  mine?: boolean;
+  entries: Entry[];
+}
 
-const sides = [
-  { key: 'prev', label: '前の日', entry: advent.prev as Entry },
-  { key: 'next', label: '次の日', entry: advent.next as Entry },
-];
+const calendars = advent.calendars as Calendar[];
+const dayNum = (iso: string) => Number(iso.split('-')[2]);
+const today = dayNum(advent.day);
+const sideOf = (iso: string) => (dayNum(iso) < today ? '前の日' : dayNum(iso) > today ? '次の日' : '同じ日');
 const dayOf = (iso: string) => {
   const [, m, d] = iso.split('-').map(Number);
   return { short: `${m}.${String(d).padStart(2, '0')}`, long: `${m}月${d}日` };
@@ -21,52 +28,88 @@ const dayOf = (iso: string) => {
 ---
 <nav class="advent" aria-labelledby="advent-head">
   <h2 class="advent__head" id="advent-head">アドベントカレンダーの前後の記事</h2>
-  <ul class="advent__list">
-    {sides.map(({ key, label, entry }) => {
-      const day = dayOf(entry.date);
-      const ready = entry.author && entry.title && entry.url;
-      const body = (
-        <>
-          <span class="advent__side">{label}</span>
-          <span class="advent__date"><span aria-hidden="true">{day.short}</span><span class="sr-only">{day.long}</span></span>
-          {ready ? (
+  {calendars.map((cal, ci) => (
+    <section class="advent__cal" aria-labelledby={`advent-cal-${ci}`}>
+      <h3 class="advent__name" id={`advent-cal-${ci}`}>
+        <a href={cal.url}>{cal.name}</a>
+        {cal.mine && <span class="advent__mine">この記事の企画</span>}
+      </h3>
+      <ul class="advent__list" style={`--n: ${cal.entries.length}`}>
+        {cal.entries.map((entry) => {
+          const day = dayOf(entry.date);
+          const ready = entry.author && entry.title && entry.url;
+          const body = (
             <>
-              <span class="advent__title">{entry.title}</span>
-              <span class="advent__author">{entry.author}</span>
+              <span class="advent__side">{sideOf(entry.date)}</span>
+              <span class="advent__date"><span aria-hidden="true">{day.short}</span><span class="sr-only">{day.long}</span></span>
+              {ready ? (
+                <span class="advent__title">{entry.title}</span>
+              ) : (
+                <span class="advent__title advent__title--wait">{entry.author ? '準備中' : 'まだ空いている日'}</span>
+              )}
+              {entry.author && <span class="advent__author">{entry.author}</span>}
             </>
-          ) : (
-            <span class="advent__title advent__title--wait">準備中</span>
-          )}
-        </>
-      );
-      return (
-        <li class={`advent__item advent__item--${key}`}>
-          {ready ? <a class="advent__card" href={entry.url}>{body}</a> : <div class="advent__card">{body}</div>}
-        </li>
-      );
-    })}
-  </ul>
+          );
+          return <li class="advent__item">{ready ? <a class="advent__card" href={entry.url}>{body}</a> : <div class="advent__card">{body}</div>}</li>;
+        })}
+      </ul>
+    </section>
+  ))}
 </nav>
 
 <style>
   .advent {
+    display: grid;
+    gap: 40px;
     width: min(100% - 40px, 960px);
     margin: 0 auto;
     padding: 72px 0 24px;
   }
 
   .advent__head {
-    margin: 0 0 20px;
+    margin: 0;
     text-align: center;
     font-size: 16px;
     font-weight: 700;
     letter-spacing: 0.04em;
   }
 
+  .advent__cal {
+    display: grid;
+    gap: 14px;
+  }
+
+  .advent__name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+
+  /* 押せる高さを24px以上にする（WCAG 2.5.8） */
+  .advent__name a {
+    padding-block: 3px;
+    color: var(--ink);
+    text-underline-offset: 0.2em;
+  }
+
+  .advent__mine {
+    padding: 0 10px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
   .advent__list {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    gap: 12px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -82,25 +125,11 @@ const dayOf = (iso: string) => {
     align-items: baseline;
     gap: 4px 12px;
     height: 100%;
-    padding: 20px 22px;
+    padding: 16px 18px;
     border: 2px solid var(--ink);
     border-radius: 12px;
     color: var(--ink);
     text-decoration: none;
-  }
-
-  /* 次の日は右側に置くので、中身も右へ寄せる */
-  .advent__item--next .advent__card {
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      'date side'
-      'title title'
-      'author author';
-    text-align: right;
-  }
-
-  .advent__item--next .advent__date {
-    justify-self: end;
   }
 
   a.advent__card {
@@ -125,16 +154,17 @@ const dayOf = (iso: string) => {
 
   .advent__date {
     grid-area: date;
+    justify-self: end;
     font-family: var(--num);
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 500;
     line-height: 1;
   }
 
   .advent__title {
     grid-area: title;
-    margin-top: 8px;
-    font-size: 17px;
+    margin-top: 6px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.5;
   }

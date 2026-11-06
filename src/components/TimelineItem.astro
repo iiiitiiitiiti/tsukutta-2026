@@ -259,8 +259,11 @@ const pair = (item: string) => {
     transition: rotate 250ms, translate 250ms;
   }
 
+  /* 開いた印（文言・矢印・下線）は、押した瞬間に切り替える。details の open は閉じる動きが終わるまで残るので、
+     スクリプトが動くときは is-open で見る。動かないときは open で見る */
   .item__summary:hover,
-  .item__more[open] .item__summary {
+  .item__more.is-open .item__summary,
+  :global(html:not(.js)) .item__more[open] .item__summary {
     text-decoration: underline;
   }
 
@@ -268,17 +271,20 @@ const pair = (item: string) => {
     outline-color: var(--on-c);
   }
 
-  .item__more[open] .item__summary::after {
+  .item__more.is-open .item__summary::after,
+  :global(html:not(.js)) .item__more[open] .item__summary::after {
     rotate: 225deg;
     translate: 0 2px;
   }
 
   .item__close,
-  .item__more[open] .item__open {
+  .item__more.is-open .item__open,
+  :global(html:not(.js)) .item__more[open] .item__open {
     display: none;
   }
 
-  .item__more[open] .item__close {
+  .item__more.is-open .item__close,
+  :global(html:not(.js)) .item__more[open] .item__close {
     display: inline;
   }
 
@@ -473,8 +479,18 @@ const pair = (item: string) => {
   for (const more of document.querySelectorAll<HTMLDetailsElement>('[data-more]')) {
     const summary = more.querySelector('summary')!;
     const body = more.querySelector<HTMLElement>('.item__body')!;
+    // 文言を「くわしく読む」と「閉じる」で入れ替え、新しいほうを下から浮かばせる
+    const flip = (open: boolean) => {
+      more.classList.toggle('is-open', open);
+      const label = summary.querySelector<HTMLElement>(open ? '.item__close' : '.item__open')!;
+      label.animate([{ opacity: 0, translate: '0 6px' }, { opacity: 1, translate: '0 0' }], { duration: 260, easing: EASE });
+    };
     [...body.children].forEach((c, i) => (c as HTMLElement).style.setProperty('--n', String(i)));
     let run: Animation | null = null;
+    // ページ内検索などで、押さずに開いたときも文言と矢印を合わせる
+    more.addEventListener('toggle', () => {
+      if (!run) more.classList.toggle('is-open', more.open);
+    });
     // 古いブラウザは動きの中の overflow を無視するので、動いている間だけ要素に付ける
     const done = () => {
       run = null;
@@ -489,6 +505,7 @@ const pair = (item: string) => {
       body.style.overflow = 'clip';
       const closing = more.open && !more.classList.contains('is-closing');
       if (closing) {
+        flip(false);
         more.classList.add('is-closing');
         const h = from ?? body.getBoundingClientRect().height;
         run = body.animate(
@@ -506,6 +523,7 @@ const pair = (item: string) => {
         return;
       }
       more.classList.remove('is-closing');
+      flip(true);
       more.classList.add('is-entering');
       more.open = true;
       const h = body.getBoundingClientRect().height;
