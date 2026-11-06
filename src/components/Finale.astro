@@ -11,7 +11,7 @@ interface Props {
   tools: Tool[];
 }
 const { tools } = Astro.props;
-// 映画の終わりと同じく、作った物を「出演」として流し、そのあとにスタッフ・スペシャルサンクス・製作を大げさに並べる
+// 映画の終わりと同じく、作った物を「出演」として流し、そのあとにスタッフ・スペシャルサンクス・制作委員会を大げさに並べる
 const staff = [
   ['監督・主演・注文', 'がーさん'],
   ['制作', 'Claude'],
@@ -19,13 +19,22 @@ const staff = [
   ['書体', 'Noto Sans JP／Oswald'],
   ['アイコン', 'Lucide'],
 ];
-const thanks = ['約3万問のクイズを作ったみなさん', '全国の動物園と水族館', '最初の1種のホシハジロ', 'ウクレレとハワイ', '読んでくれたあなた'];
-const committee = ['ゆる民俗学・音楽学ラジオ 非公式', '〜壁達の福音：Q〜', 'Advent Calendar 2026', '制作委員会'];
+const thanks = [
+  '黒川晝車',
+  '浦下拓巳',
+  'その他の株式会社Pedanticメンバー',
+  '壁',
+  '約3万問のクイズとそれらを作問したクイズプレイヤーたち',
+  '全国の動物園と水族館',
+  'この世を生きるすべてのいきものたち',
+  'フラの仲間たち',
+];
+const committee = ['ゆる民俗学・音楽学ラジオ 非公式', 'Advent Calendar 2026', '制作委員会'];
 ---
 <section class="roll" aria-labelledby="roll-head" data-endroll>
   <div class="roll__frame" data-roll-frame>
     <div class="roll__list" data-roll-list>
-      <h2 class="roll__head" id="roll-head" data-roll-head>今年つくったもの</h2>
+      <h2 class="roll__head" id="roll-head" data-roll-head>2026年につくったもの</h2>
       <p class="roll__label">出演</p>
       <dl class="roll__rows">
         {tools.map((t) => (
@@ -48,7 +57,7 @@ const committee = ['ゆる民俗学・音楽学ラジオ 非公式', '〜壁達�
         <ul class="roll__thanks">{thanks.map((t) => <li>{t}</li>)}</ul>
       </div>
       <div class="roll__credit">
-        <p class="roll__role">製作</p>
+        <p class="roll__role">制作</p>
         <p class="roll__committee">{committee.map((t) => <span>{t}</span>)}</p>
       </div>
     </div>
@@ -110,13 +119,14 @@ const committee = ['ゆる民俗学・音楽学ラジオ 非公式', '〜壁達�
     display: contents;
   }
 
+  /* 見出しの「出演」から名前までの間は、スタッフ以降の役割と名前の間（10px）にそろえる。並びの間は80px */
   .roll__label {
-    margin: 0 0 -40px;
+    margin: 0 0 -70px;
     color: #a3a3a3;
     font-size: 13px;
     font-weight: 500;
-    letter-spacing: 0.4em;
-    text-indent: 0.4em;
+    letter-spacing: 0.16em;
+    text-indent: 0.16em;
   }
 
   .roll__date {

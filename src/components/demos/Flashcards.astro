@@ -50,7 +50,7 @@ const cards = [
         <button type="button" class="fc__rate fc__rate--hard" data-rate="2"><span class="fc__rate-label">難しい</span><span class="fc__iv" data-iv="2">6分</span></button>
         <button type="button" class="fc__rate fc__rate--good" data-rate="3"><span class="fc__rate-label">わかった</span><span class="fc__iv" data-iv="3">10分</span></button>
       </div>
-      <p class="fc__remaining" data-remaining>残り {cards.length} 枚</p>
+      <p class="fc__remaining"><span data-remaining>残り {cards.length} 枚</span><span class="fc__hint" data-hint>・スワイプ: ← もう一度 / 速さで評価 →</span></p>
     </footer>
   </section>
 
@@ -375,9 +375,10 @@ const cards = [
     padding: 8px 16px 12px;
   }
 
+  /* 答えを出す前と後で下の段の高さを変えない。変わるとカードの高さが問題ごとに伸び縮みして見える */
   .fc__primary {
     width: 100%;
-    min-height: 48px;
+    min-height: 54px;
     padding: 8px 14px;
     border: 1px solid var(--primary);
     border-radius: 8px;
@@ -408,7 +409,7 @@ const cards = [
     align-items: center;
     justify-content: center;
     gap: 2px;
-    min-height: 48px;
+    min-height: 54px;
     padding: 6px 4px;
     border: none;
     border-radius: 8px;
@@ -438,6 +439,11 @@ const cards = [
     color: var(--fc-muted);
     font-size: 13px;
     text-align: center;
+  }
+
+  /* スワイプの案内は答えを出すまで見えなくするだけで、場所は取っておく */
+  .fc__hint.is-off {
+    visibility: hidden;
   }
 
   .fc__result {
@@ -597,7 +603,8 @@ const cards = [
       back.setAttribute('aria-hidden', String(!on));
       reveal.hidden = on;
       rates.hidden = !on;
-      $('[data-remaining]').textContent = `残り ${queue.length} 枚${on ? '・スワイプ: ← もう一度 / 速さで評価 →' : ''}`;
+      $('[data-remaining]').textContent = `残り ${queue.length} 枚`;
+      $('[data-hint]').classList.toggle('is-off', !on);
       if (on) live.textContent = `答え: ${queue[0].card.a}`;
     };
 
@@ -699,10 +706,10 @@ const cards = [
     };
 
     // 評価が決まったカードを横へ飛ばしてから次へ（本物の flyOut と同じ向き）
-    const flyOut = (rating: Rating) => {
+    // ボタンの「難しい」は左、「わかった」は右へ飛ばす。スワイプは指を動かした向きへ飛ばす
+    const flyOut = (rating: Rating, dir = rating <= 2 ? -1 : 1) => {
       if (busy) return;
       busy = true;
-      const dir = rating === 1 ? -1 : 1;
       const dx = dir * (scene.clientWidth + 80);
       drag.className = 'fc__drag is-fly';
       drag.style.transform = `translateX(${dx}px) translateY(${Math.abs(dx) * 0.06}px) rotate(${dx * 0.06}deg)`;
@@ -757,7 +764,7 @@ const cards = [
       scene.dataset.eatClick = 'true';
       if (!horizontal) return;
       if (!cancel && Math.abs(dx) >= SWIPE) {
-        flyOut(dx < 0 ? 1 : ratingFromElapsed(Date.now() - shownAt));
+        flyOut(dx < 0 ? 1 : ratingFromElapsed(Date.now() - shownAt), dx < 0 ? -1 : 1);
         return;
       }
       badge.hidden = true;

@@ -52,6 +52,14 @@ html {
   interpolate-size: allow-keywords;
 }
 
+/* 指で動かす画面では、エンドロールの近くで止める仕掛けを外す。スマホのブラウザは、ページ全体に止まる所があると
+   指を離したあとの滑り方が変わり、下のバーが消えて画面が伸びたときに止まる所を測り直して跳ねることがある */
+@media (pointer: coarse) {
+  html {
+    scroll-snap-type: none;
+  }
+}
+
 body {
   margin: 0;
   background: var(--bg);

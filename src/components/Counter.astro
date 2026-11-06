@@ -106,6 +106,26 @@ const { value, unit, label } = Astro.props;
     return reels;
   }
 
+  // ページ内リンクで滑って移っている間は true。止まったら各数字に見えているか確かめ直させる
+  let jumping = false;
+  let jumpEnd = 0;
+  const recheck: (() => void)[] = [];
+  const land = () => {
+    if (!jumping) return;
+    jumping = false;
+    clearTimeout(jumpEnd);
+    recheck.forEach((f) => f());
+  };
+  document.addEventListener('click', (e) => {
+    const a = (e.target as Element).closest?.('a[href^="#"]');
+    if (!a) return;
+    jumping = true;
+    clearTimeout(jumpEnd);
+    // scrollend が来ないブラウザのための保険
+    jumpEnd = window.setTimeout(land, 1500);
+  });
+  window.addEventListener('scrollend', land);
+
   document.querySelectorAll<HTMLElement>('.counter').forEach((root) => {
     const style = getComputedStyle(root);
     const duration = toMs(style.getPropertyValue('--duration'));
@@ -124,19 +144,23 @@ const { value, unit, label } = Astro.props;
     };
 
     // 回るのは最初に画面へ入ったときだけ。外へ出て戻っても止まった数字のまま。
-    // ページ内リンクで滑って通り過ぎるだけのときは回さない。0.3秒とどまって見えていたら回す
-    let wait = 0;
+    // ふつうのスクロールでは、札が下から上がるのと同時（画面の下から1割の所）に回し始め、0が見えている間を作らない。
+    // ページ内リンクで滑って通り過ぎる間は回さず、止まったときに見えていたら回す
+    let done = false;
     const io = new IntersectionObserver(
       ([e]) => {
-        clearTimeout(wait);
-        if (e.intersectionRatio < 0.6) return;
-        wait = window.setTimeout(() => {
-          io.disconnect();
-          play();
-        }, 300);
+        if (!e.isIntersecting || jumping || done) return;
+        done = true;
+        io.disconnect();
+        play();
       },
-      { threshold: 0.6 },
+      { rootMargin: '0px 0px -10% 0px' },
     );
+    recheck.push(() => {
+      if (done) return;
+      io.unobserve(root);
+      io.observe(root);
+    });
     io.observe(root);
   });
 </script>

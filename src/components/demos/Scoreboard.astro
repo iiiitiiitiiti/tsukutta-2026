@@ -469,9 +469,9 @@ const N = 2;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
     width: min(100%, 300px);
-    padding: 28px 24px;
+    padding: 18px 24px;
     border: 2px solid rgb(255 215 0 / 0.4);
     border-radius: 24px;
     background: linear-gradient(160deg, #1a1a3e 0%, #2d1b4e 100%);
@@ -480,9 +480,10 @@ const N = 2;
     animation: card-in 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
+  /* 見本の枠は本物の画面より低い。札が枠からはみ出さないよう、杯と間を本物より小さくする */
   .qs__win-cup {
     margin: 0;
-    font-size: 56px;
+    font-size: 44px;
     line-height: 1;
     filter: drop-shadow(0 0 20px rgb(255 215 0 / 0.8));
   }
@@ -692,6 +693,9 @@ const N = 2;
         root.querySelector('[data-win-name]')!.textContent = p.name;
         root.querySelector('[data-win-score]')!.textContent = `○ ${p.correct}  ✕ ${p.wrong}`;
         win.hidden = false;
+        // それでも札が枠より高いときは、閉じるまで枠を伸ばす
+        const need = win.querySelector<HTMLElement>('.qs__win-card')!.offsetHeight + 32;
+        if (need > root.offsetHeight) root.style.minHeight = `${need}px`;
         root.querySelector<HTMLButtonElement>('[data-back]')!.focus();
         stopConfetti = launchConfetti(canvas);
       });
@@ -701,6 +705,7 @@ const N = 2;
       if (win.hidden) return;
       stopConfetti();
       win.hidden = true;
+      root.style.minHeight = '';
       opener?.focus();
     };
     root.querySelector('[data-close]')!.addEventListener('click', close);
