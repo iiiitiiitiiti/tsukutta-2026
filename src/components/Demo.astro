@@ -27,6 +27,14 @@ const Component = demos[kind];
     text-align: left;
   }
 
+  /* スマホでは見本を広く見せるため、外枠の余白を詰めて本文の余白にはみ出させる */
+  @media (max-width: 599px) {
+    .demo {
+      margin-inline: -12px;
+      padding: 12px 8px;
+    }
+  }
+
   .demo__label {
     margin: 0 0 12px;
     color: var(--ci);

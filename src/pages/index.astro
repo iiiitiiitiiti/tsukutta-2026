@@ -8,6 +8,8 @@ import extrasList from '../data/extras.json';
 import MonthBar from '../components/MonthBar.astro';
 import TimelineItem from '../components/TimelineItem.astro';
 import Shot from '../components/Shot.astro';
+import HeroShelf from '../components/HeroShelf.astro';
+import Finale from '../components/Finale.astro';
 
 type Extra = { id: string; match: string; icon?: string; lead?: string; counter?: { value: string; unit: string }; demo?: string; noShot?: boolean };
 type Entry = { date: string; month: number; day: number; title: string; paragraphs: string[]; hasImage: boolean; tools: string[] };
@@ -30,6 +32,10 @@ const after = rest.slice(lastMonth + 1);
 let k = 0;
 const side = () => (k++ % 2 === 0 ? 'left' : 'right');
 const total = extras.size;
+const anchorOf = (e: Entry) => `i-${e.tools[0]}`;
+const shelf = monthSections.flatMap((s) => s.entries.flatMap((e) => e.tools.map((id) => ({ id, name: extras.get(id)!.match, icon: extras.get(id)!.icon, month: e.month, day: e.day, anchor: anchorOf(e) }))));
+// 題は「〜を」の後ろで2行に分ける。原稿の題に「を」が無ければそのまま1つの塊で出す
+const titleParts = timeline.title.includes('を') ? [timeline.title.slice(0, timeline.title.indexOf('を') + 1), timeline.title.slice(timeline.title.indexOf('を') + 1)] : [timeline.title];
 const description = `Webデザイナーが今年AIに頼んで作ったアプリやページ${total}件を、作った日の順に並べた年表。`;
 ---
 <!doctype html>
@@ -48,9 +54,14 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     <MonthBar months={months} counts={counts} />
 
     <header class="hero">
-      <p class="hero__year" aria-hidden="true">2026</p>
-      <h1 class="hero__title">{timeline.title}</h1>
-      <div class="hero__body">{intro.paragraphs.map((p) => <p>{p}</p>)}</div>
+      <div class="hero__top">
+        <div class="hero__head">
+          <p class="hero__year" aria-hidden="true">2026</p>
+          <h1 class="hero__title">{titleParts.map((t) => <span>{t}</span>)}</h1>
+        </div>
+        <div class="hero__chart"><HeroShelf tools={shelf} /></div>
+        <div class="hero__body">{intro.paragraphs.map((p) => <p>{p}</p>)}</div>
+      </div>
       {intro.hasImage && <div class="cover-shot"><Shot id="tana-overview" alt="つくったもの棚の画面" variant="full" /></div>}
     </header>
 
@@ -70,7 +81,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
               <span class="tl-month__count">{counts[s.month]}つ作った</span>
             </h2>
             {s.entries.map((e, i) => (
-              <TimelineItem {...e} tools={e.tools.map((id) => extras.get(id)!)} side={side()} first={i === 0} />
+              <TimelineItem {...e} tools={e.tools.map((id) => extras.get(id)!)} side={side()} first={i === 0} anchor={anchorOf(e)} />
             ))}
           </div>
         </section>
@@ -83,6 +94,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
         <div class="note__body">{s.paragraphs.map((p) => <p>{p}</p>)}</div>
       </section>
     ))}
+    <Finale count={shelf.length} />
     <footer class="foot"><span class="foot__end" aria-hidden="true"></span></footer>
   </body>
 </html>

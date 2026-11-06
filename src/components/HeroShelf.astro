@@ -1,0 +1,248 @@
+---
+// 表紙の棚。18作のアイコンが作った順に上から落ちてきて、月の列に積み上がる。
+// 積み上がった高さがそのまま月ごとの作った数の棒グラフになる。
+// アイコンは年表のその項目へ、月の数字はその月の帯へのリンクで、目次も兼ねる
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+interface Tool {
+  id: string;
+  name: string;
+  icon?: string;
+  month: number;
+  day: number;
+  anchor: string;
+}
+interface Props {
+  tools: Tool[];
+}
+const { tools } = Astro.props;
+const months = [4, 5, 6, 7, 8, 9, 10, 11];
+const max = Math.max(...months.map((m) => tools.filter((t) => t.month === m).length));
+const svgOf = (icon?: string) => {
+  const p = icon ? resolve(process.cwd(), 'node_modules/lucide-static/icons', `${icon}.svg`) : '';
+  return p && existsSync(p) ? readFileSync(p, 'utf8').replace(/<!--[\s\S]*?-->/g, '') : '';
+};
+---
+<nav class="chart" aria-label={`月ごとに作った数。全部で${tools.length}こ`} style={`--max: ${max}`}>
+  <ol class="chart__cols">
+    {months.map((m) => {
+      const list = tools.filter((t) => t.month === m);
+      return (
+        <li class="chart__col" data-month={m} data-empty={list.length === 0}>
+          <ol class="chart__stack">
+            {list.map((t) => (
+              <li class="chart__slot" style={`--i: ${tools.indexOf(t)}; --r: ${((tools.indexOf(t) * 37) % 50) - 25}deg`}>
+                <a class="chart__link" href={`#${t.anchor}`}>
+                  <span class="chart__icon" aria-hidden="true" set:html={svgOf(t.icon)} />
+                  <span class="chart__name">{t.name}<span class="sr-only">（{m}月{t.day}日）</span></span>
+                </a>
+              </li>
+            ))}
+          </ol>
+          {list.length > 0 ? (
+            <a class="chart__month" href={`#m${m}`}><span class="chart__num">{m}</span><span class="chart__unit">月</span><span class="chart__count">{list.length}</span></a>
+          ) : (
+            <span class="chart__month"><span class="chart__num">{m}</span><span class="chart__unit">月</span><span class="chart__count">0</span></span>
+          )}
+        </li>
+      );
+    })}
+  </ol>
+</nav>
+
+<style>
+  .chart {
+    --size: 34px;
+    --gap: 4px;
+    width: 100%;
+  }
+
+  .chart__cols {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    align-items: end;
+    gap: 0 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .chart__col {
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+  }
+
+  /* 下から積む。いちばん多い月の高さで全部の列をそろえる */
+  .chart__stack {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: var(--gap);
+    width: 100%;
+    height: calc(var(--max) * var(--size) + (var(--max) - 1) * var(--gap));
+    margin: 0;
+    padding: 0;
+    border-bottom: 3px solid var(--ink);
+    list-style: none;
+  }
+
+  .chart__slot {
+    animation: drop 1000ms both;
+    animation-delay: calc(500ms + var(--i) * 110ms);
+  }
+
+  .chart__link {
+    position: relative;
+    display: block;
+    color: var(--ink);
+  }
+
+  .chart__icon {
+    display: grid;
+    place-items: center;
+    width: var(--size);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--c);
+    transition: scale 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .chart__icon :global(svg) {
+    width: 50%;
+    height: auto;
+    stroke-width: 1.75;
+  }
+
+  .chart__name {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 8px);
+    z-index: 2;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    white-space: nowrap;
+    translate: -4px -50%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms, translate 150ms;
+  }
+
+  .chart__col:nth-child(n + 6) .chart__name {
+    right: calc(100% + 8px);
+    left: auto;
+    translate: 4px -50%;
+  }
+
+  .chart__link:hover .chart__icon,
+  .chart__link:focus-visible .chart__icon {
+    scale: 1.15;
+  }
+
+  .chart__link:hover .chart__name,
+  .chart__link:focus-visible .chart__name {
+    translate: 0 -50%;
+    opacity: 1;
+  }
+
+  .chart__month {
+    display: grid;
+    justify-items: center;
+    color: var(--ink);
+    font-family: var(--num);
+    line-height: 1;
+    text-decoration: none;
+  }
+
+  .chart__num {
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  .chart__unit {
+    margin-top: 2px;
+    font-family: var(--body);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .chart__count {
+    display: grid;
+    place-items: center;
+    min-width: 28px;
+    margin-top: 8px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: var(--c);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  [data-empty='true'] .chart__month {
+    color: var(--ink-soft);
+  }
+
+  [data-empty='true'] .chart__count {
+    background: var(--empty);
+  }
+
+  a.chart__month:hover .chart__num {
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 4px;
+  }
+
+  @keyframes drop {
+    0% {
+      translate: 0 -110vh;
+      rotate: var(--r);
+      animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+    }
+    55% {
+      translate: 0 0;
+      rotate: 0deg;
+      animation-timing-function: cubic-bezier(0, 0.55, 0.45, 1);
+    }
+    72% {
+      translate: 0 -18px;
+      animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+    }
+    86% {
+      translate: 0 0;
+      animation-timing-function: cubic-bezier(0, 0.55, 0.45, 1);
+    }
+    93% {
+      translate: 0 -5px;
+      animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
+    }
+    100% {
+      translate: 0 0;
+      rotate: 0deg;
+    }
+  }
+
+  @media (min-width: 900px) {
+    .chart {
+      --size: 60px;
+      --gap: 6px;
+    }
+
+    .chart__cols {
+      gap: 0 12px;
+    }
+
+    .chart__num {
+      font-size: 44px;
+    }
+
+    .chart__unit {
+      font-size: 13px;
+    }
+  }
+</style>

@@ -37,8 +37,10 @@ const cleanup = () => {
 };
 
 // ページの中で動かす検査。結果を JSON の文字列で返す
-const audit = `(() => {
+// 全文を開くと中の見本の出だしの動き（透明から始まる）が走るので、終わるまで1.5秒待ってから測る
+const audit = `(async () => {
   document.querySelectorAll('details').forEach((d) => (d.open = true));
+  await new Promise((r) => setTimeout(r, 1500));
   const cv = document.createElement('canvas');
   cv.width = cv.height = 1;
   const cx = cv.getContext('2d', { willReadFrequently: true });
@@ -79,6 +81,8 @@ const audit = `(() => {
     if (r.width < 2 || r.height < 2) continue;
     const cs = getComputedStyle(el);
     if (cs.visibility === 'hidden') continue;
+    // さわったときだけ出る吹き出しなど、透明で見えていない文字は数えない
+    if (opacityOf(el) === 0) continue;
     // 回る数字の帯の途中の桁と、使えないボタン（WCAG の対象外）は数えない
     if (el.closest('.counter__digit') || el.closest('button:disabled')) continue;
     const bg = bgOf(el);
@@ -93,7 +97,7 @@ const audit = `(() => {
 
   // 押す所は 24px 四方以上（WCAG 2.5.8）。label の中のチェックは label 全体で押せるので除く
   const small = [...document.querySelectorAll('a, button, summary, input, label')]
-    .filter((e) => !(e.tagName === 'INPUT' && e.closest('label')))
+    .filter((e) => !(e.tagName === 'INPUT' && e.closest('label')) && !e.classList.contains('sr-only'))
     .map((e) => [e, e.getBoundingClientRect()])
     .filter(([, r]) => r.width > 0 && (r.width < 24 || r.height < 24))
     .map(([e, r]) => e.tagName.toLowerCase() + '.' + e.className + ' ' + Math.round(r.width) + 'x' + Math.round(r.height));
@@ -122,7 +126,7 @@ try {
     const nav = await send('Page.navigate', { url });
     if (nav.result?.errorText) throw new Error(`${url} を開けなかった（${nav.result.errorText}）。先に preview を動かす`);
     await sleep(3000);
-    const res = await send('Runtime.evaluate', { expression: audit, returnByValue: true });
+    const res = await send('Runtime.evaluate', { expression: audit, returnByValue: true, awaitPromise: true });
     if (res.result.exceptionDetails) throw new Error(res.result.exceptionDetails.exception?.description ?? '検査が止まった');
     const r = JSON.parse(res.result.result.value);
     const ok = r.bad.length === 0 && r.small.length === 0 && !r.overflow;

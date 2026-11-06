@@ -1,154 +1,778 @@
 ---
-// 暗記カードの小さな実物。問題はこの年表そのものから作った3枚
+// 暗記カードの小さな実物。本物の学習画面（見出し・進み具合の棒・めくれるカード・2択の評価・スワイプ・結果のゲージ）を写した。
+// 問題はこの年表そのものから作った3枚（ほかの人のクイズは載せない）。
+// 次回の間隔は本物の計算（ts-fsrs の既定）で新規カードを評価したときの値
 const cards = [
-  { q: 'この年表でいちばん最初に作ったものは？', a: 'クイズ得点板（4月11日）' },
-  { q: '1日に3つ作った日は何月何日？', a: '10月19日' },
-  { q: '動物園・水族館ログに入っている施設の数は？', a: '473施設' },
+  { q: 'この年表でいちばん最初に作ったものは？', a: 'クイズ得点板', note: '4月11日' },
+  { q: '1日に3つ作った日は何月何日？', a: '10月19日', note: 'ひとつめ・うごき帳・問題集の下ごしらえ' },
+  { q: '動物園・水族館ログに入っている施設の数は？', a: '473施設', note: '7月13日に作った' },
 ];
 ---
 <div class="fc" data-fc>
-  <div class="fc__stage">
-    <button type="button" class="fc__card" data-card aria-describedby="fc-hint">
-      <span class="fc__face fc__face--q"><span class="fc__tag">Q</span><span data-q>{cards[0].q}</span></span>
-      <span class="fc__face fc__face--a" aria-hidden="true"><span class="fc__tag">A</span><span data-a>{cards[0].a}</span></span>
-    </button>
-  </div>
-  <p class="fc__hint" id="fc-hint">カードを押すと答えが出ます</p>
-  <div class="fc__nav">
-    <span class="fc__count" data-count>1 / {cards.length}</span>
-    <button type="button" class="fc__next" data-next>次のカード</button>
-  </div>
+  <header class="fc__head">
+    <div class="fc__head-row">
+      <button type="button" class="fc__icon-btn" data-quit aria-label="学習を中断して結果を見る">←</button>
+      <p class="fc__title">この年表</p>
+    </div>
+    <div class="fc__track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="このセッションの進み具合" data-track>
+      <div class="fc__fill" data-fill></div>
+    </div>
+  </header>
+
+  <section class="fc__study" data-study>
+
+    <div class="fc__scroll">
+      <div class="fc__scene" data-scene>
+        <div class="fc__drag" data-drag>
+          <div class="fc__inner" data-inner>
+            <div class="fc__card fc__front" data-front>
+              <span class="fc__chips"><span class="fc__chip-new" data-new>新規</span><span class="fc__phase" data-phase>フェーズ 0</span></span>
+              <div class="fc__q" data-q>{cards[0].q}</div>
+            </div>
+            <div class="fc__card fc__back" data-back aria-hidden="true">
+              <div class="fc__q" data-q2>{cards[0].q}</div>
+              <hr />
+              <div class="fc__a" data-a>{cards[0].a}</div>
+              <div class="fc__note" data-note>{cards[0].note}</div>
+            </div>
+          </div>
+        </div>
+        <div class="fc__badge" data-badge hidden></div>
+      </div>
+    </div>
+
+    <footer class="fc__actions">
+      <button type="button" class="fc__primary" data-reveal>答えを表示</button>
+      <div class="fc__rates" data-rates hidden>
+        <button type="button" class="fc__rate fc__rate--hard" data-rate="2"><span class="fc__rate-label">難しい</span><span class="fc__iv" data-iv="2">6分</span></button>
+        <button type="button" class="fc__rate fc__rate--good" data-rate="3"><span class="fc__rate-label">わかった</span><span class="fc__iv" data-iv="3">10分</span></button>
+      </div>
+      <p class="fc__remaining" data-remaining>残り {cards.length} 枚</p>
+    </footer>
+  </section>
+
+  <section class="fc__result" data-result hidden>
+    <div class="fc__gauge" role="img" aria-label="定着率" data-gauge>
+      <svg viewBox="0 0 220 130" aria-hidden="true">
+        <defs>
+          <linearGradient id="fc-gauge" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#f0c9c4" />
+            <stop offset="100%" stop-color="#2e7382" />
+          </linearGradient>
+        </defs>
+        <path d="M 20 115 A 90 90 0 0 1 200 115" fill="none" stroke="#dcdcd8" stroke-width="18" stroke-linecap="round" />
+        <path d="M 20 115 A 90 90 0 0 1 200 115" fill="none" stroke="url(#fc-gauge)" stroke-width="18" stroke-linecap="round" stroke-dasharray="0 283" data-arc />
+      </svg>
+      <div class="fc__gauge-value">
+        <span class="fc__gauge-caption">定着率</span>
+        <strong data-percent>0%</strong>
+      </div>
+    </div>
+    <p class="fc__comment" data-comment></p>
+    <div class="fc__result-actions">
+      <button type="button" class="fc__primary" data-retry hidden></button>
+      <button type="button" class="fc__finish" data-finish>終了する</button>
+    </div>
+  </section>
+
+  <p class="sr-only" aria-live="polite" data-live></p>
   <script type="application/json" data-cards set:html={JSON.stringify(cards)} />
 </div>
 
 <style>
-  .fc__stage {
-    perspective: 900px;
-  }
+  /* 本物の暗記カードの色（styles.css の :root） */
+  .fc {
+    --primary: #2e7382;
+    --primary-soft: #8ac6d3;
+    --fc-bg: #f6f6f4;
+    --fc-text: #3f464d;
+    --fc-muted: #5f6a72;
+    --fc-border: #dcdcd8;
+    --answer: #c53f35;
+    --again: #c0392f;
+    --hard: #a8642a;
+    --chip-new-bg: #e4f1f4;
+    --chip-new-text: #1f5560;
 
-  .fc__card {
-    position: relative;
-    display: block;
-    width: 100%;
-    min-height: 150px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-    transform-style: preserve-3d;
-    transition: transform 520ms cubic-bezier(0.3, 0.7, 0.2, 1);
-  }
-
-  .fc__card[aria-pressed='true'] {
-    transform: rotateY(180deg);
-  }
-
-  .fc__face {
-    position: absolute;
-    inset: 0;
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 20px;
-    border-radius: 8px;
-    background: #fff;
-    box-shadow: inset 0 0 0 1px var(--rule), 0 3px 8px -4px rgb(38 43 53 / 0.3);
-    font-size: 17px;
-    line-height: 1.6;
-    backface-visibility: hidden;
+    flex-direction: column;
+    height: 440px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--fc-bg);
+    color: var(--fc-text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP Variable', 'Noto Sans JP', sans-serif;
+    line-height: 1.5;
   }
 
-  .fc__face--a {
-    transform: rotateY(180deg);
-    color: #c53f35;
-    font-weight: 700;
+  .fc :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
   }
 
-  .fc__tag {
-    flex: none;
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #2e7382;
-    color: #fff;
-    font-weight: 700;
-  }
-
-  .fc__face--a .fc__tag {
-    background: #c53f35;
-  }
-
-  .fc__hint {
-    margin: 8px 0 0;
-    color: var(--ink-soft);
-    font-size: 13px;
-  }
-
-  .fc__nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 12px;
-  }
-
-  .fc__count {
-    font-family: var(--num);
-    font-weight: 500;
-  }
-
-  .fc__next {
-    padding: 8px 16px;
-    border: 0;
-    border-radius: 999px;
-    background: #2e7382;
-    color: #fff;
+  .fc button {
     font: inherit;
     font-size: 14px;
     cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: transform 0.12s ease;
+  }
+
+  .fc button:active {
+    transform: scale(0.97);
+  }
+
+  .fc__study,
+  .fc__result {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .fc__study[hidden],
+  .fc__result[hidden] {
+    display: none;
+  }
+
+  .fc__head {
+    padding: 12px 16px 0;
+  }
+
+  .fc__head-row {
+    display: grid;
+    grid-template-columns: 38px 1fr 38px;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .fc__icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid var(--primary-soft);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--primary);
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  .fc__icon-btn[hidden] {
+    display: none;
+  }
+
+  .fc__title {
+    grid-column: 2;
+    margin: 4px 0;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  .fc__track {
+    height: 6px;
+    margin: 10px 0 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--fc-border);
+  }
+
+  .fc__fill {
+    width: 0;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--primary);
+    transition: width 0.25s ease;
+  }
+
+  .fc__scroll {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    padding: 12px 16px;
+  }
+
+  .fc__scene {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    perspective: 1200px;
+    cursor: pointer;
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .fc__scene.is-enter {
+    animation: card-enter 0.28s ease;
+  }
+
+  .fc__drag {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+  }
+
+  .fc__drag.is-settle {
+    transition: transform 0.42s cubic-bezier(0.18, 1.25, 0.35, 1);
+  }
+
+  .fc__drag.is-fly {
+    opacity: 0.15;
+    transition: transform 0.26s cubic-bezier(0.32, 0, 0.67, 0), opacity 0.26s ease-in;
+  }
+
+  .fc__inner {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .fc__inner.is-flipped {
+    transform: rotateY(180deg);
+  }
+
+  .fc__card {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 28px 20px;
+    overflow-y: auto;
+    border: 1px solid var(--fc-border);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgb(63 70 77 / 0.07);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .fc__back {
+    transform: rotateY(180deg);
+  }
+
+  .fc__card > .fc__q {
+    margin-top: auto;
+  }
+
+  .fc__card > :last-child {
+    margin-bottom: auto;
+  }
+
+  .fc__chips {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .fc__chip-new {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--chip-new-bg);
+    color: var(--chip-new-text);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .fc__chip-new[hidden] {
+    display: none;
+  }
+
+  .fc__phase {
+    padding: 1px 8px;
+    border: 1px solid var(--primary-soft);
+    border-radius: 4px;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .fc__q {
+    font-size: 20px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .fc__card hr {
+    width: 100%;
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid var(--fc-border);
+  }
+
+  .fc__a {
+    color: var(--answer);
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .fc__note {
+    margin-top: 12px;
+    color: var(--fc-muted);
+    font-size: 14px;
+  }
+
+  .fc__badge {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    z-index: 2;
+    padding: 8px 16px;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+    translate: -50% 0;
+    pointer-events: none;
+  }
+
+  .fc__badge[data-side='left'] {
+    background: var(--again);
+  }
+
+  .fc__badge[data-side='right'] {
+    background: var(--primary);
+  }
+
+  .fc__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 16px 12px;
+  }
+
+  .fc__primary {
+    width: 100%;
+    min-height: 48px;
+    padding: 8px 14px;
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .fc .fc__primary {
+    font-size: 15px;
+  }
+
+  .fc__rates {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: 8px;
+  }
+
+  .fc__rates[hidden] {
+    display: none;
+  }
+
+  .fc__rate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 48px;
+    padding: 6px 4px;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+  }
+
+  .fc__rate--hard {
+    background: var(--hard);
+  }
+
+  .fc__rate--good {
+    background: var(--primary);
+  }
+
+  .fc__rate-label {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* 本物は間隔の文字を少し薄くする。小さい文字なので白のままにした */
+  .fc__iv {
+    font-size: 12px;
+  }
+
+  .fc__remaining {
+    margin: 0;
+    color: var(--fc-muted);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .fc__result {
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .fc__gauge {
+    position: relative;
+    width: 100%;
+    max-width: 240px;
+  }
+
+  .fc__gauge svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .fc__gauge-value {
+    position: absolute;
+    right: 0;
+    bottom: 4px;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .fc__gauge-caption {
+    color: var(--fc-muted);
+    font-size: 13px;
+  }
+
+  .fc__gauge-value strong {
+    color: var(--primary);
+    font-size: 34px;
+    line-height: 1;
+  }
+
+  .fc__comment {
+    margin: 0;
+    color: var(--primary);
+    font-size: 15px;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  .fc__comment :global(span) {
+    display: block;
+  }
+
+  .fc__result-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .fc__primary[hidden] {
+    display: none;
+  }
+
+  .fc__finish {
+    min-height: 38px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: none;
+    color: var(--again);
+  }
+
+  @keyframes card-enter {
+    from {
+      opacity: 0;
+      transform: translateX(36px) rotate(1.5deg);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
   }
 </style>
 
 <script>
-  document.querySelectorAll<HTMLElement>('[data-fc]').forEach((root) => {
-    const cards: { q: string; a: string }[] = JSON.parse(root.querySelector('[data-cards]')!.textContent!);
-    const card = root.querySelector<HTMLButtonElement>('[data-card]')!;
-    const q = root.querySelector('[data-q]')!;
-    const a = root.querySelector('[data-a]')!;
-    const count = root.querySelector('[data-count]')!;
-    let i = 0;
-    card.setAttribute('aria-pressed', 'false');
+  interface Card {
+    q: string;
+    a: string;
+    note: string;
+  }
+  interface Item {
+    card: Card;
+    isNew: boolean;
+    reps: number;
+  }
+  type Rating = 1 | 2 | 3 | 4;
 
-    // 読み上げでは見えている面だけを読む（裏の答えが先に読まれないように）
-    const faceQ = card.querySelector<HTMLElement>('.fc__face--q')!;
-    const faceA = card.querySelector<HTMLElement>('.fc__face--a')!;
-    const flip = (on: boolean) => {
-      card.setAttribute('aria-pressed', String(on));
-      faceQ.setAttribute('aria-hidden', String(on));
-      faceA.setAttribute('aria-hidden', String(!on));
+  const LABELS: Record<Rating, string> = { 1: 'もう一度', 2: '難しい', 3: '普通', 4: '簡単' };
+  // 本物の既定（ts-fsrs）で、新規カードと「もう一度」のあとのカードを評価したときの次回間隔
+  const NEW_IV: Record<Rating, string> = { 1: '1分', 2: '6分', 3: '10分', 4: '8日' };
+  const AGAIN_IV: Record<Rating, string> = { 1: '1分', 2: '6分', 3: '10分', 4: '1日' };
+  const SWIPE = 80;
+  const FLY_MS = 260;
+  const PHASE_FULL = 10;
+
+  // 右スワイプは問題が出てから答えるまでの速さで振り分ける（本物の既定の秒数）
+  const ratingFromElapsed = (ms: number): Rating => {
+    const s = ms / 1000;
+    if (s < 5) return 4;
+    if (s < 10) return 3;
+    if (s < 20) return 2;
+    return 1;
+  };
+
+  const comment = (percent: number, gain: number): string[] => {
+    const gained = gain > 0 ? `今回のぶんで ${gain} フェーズ進みました` : '';
+    if (percent >= 90) return ['このデッキはほぼ完成です！', gained || '仕上げの復習を続けましょう'];
+    if (percent >= 60) return ['大半が身についてきました', gained || 'この調子で続けましょう'];
+    if (percent >= 30) return ['着実に積み上がっています', gained || 'くり返すほど間隔が延びます'];
+    if (percent >= 5) return ['少しずつ定着してきました', gained || '毎日の積み重ねが効きます'];
+    return ['まだ始まったばかりです', gained || 'くり返すほど伸びます'];
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-fc]').forEach((root) => {
+    const cards: Card[] = JSON.parse(root.querySelector('[data-cards]')!.textContent!);
+    const $ = <T extends HTMLElement = HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+    const study = $('[data-study]');
+    const result = $('[data-result]');
+    const scene = $('[data-scene]');
+    const drag = $('[data-drag]');
+    const inner = $('[data-inner]');
+    const front = $('[data-front]');
+    const back = $('[data-back]');
+    const badge = $('[data-badge]');
+    const reveal = $<HTMLButtonElement>('[data-reveal]');
+    const rates = $('[data-rates]');
+    const live = $('[data-live]');
+
+    let queue: Item[] = [];
+    let reviewed = 0;
+    let gain = 0;
+    let missed: Card[] = [];
+    let reviewState = new Map<Card, number>(); // 定着（Review）に入ったカードとその回数
+    let revealed = false;
+    let shownAt = Date.now();
+    let busy = false;
+
+    const intervals = () => (queue[0]?.isNew ? NEW_IV : AGAIN_IV);
+
+    const setRevealed = (on: boolean) => {
+      revealed = on;
+      inner.classList.toggle('is-flipped', on);
+      front.setAttribute('aria-hidden', String(on));
+      back.setAttribute('aria-hidden', String(!on));
+      reveal.hidden = on;
+      rates.hidden = !on;
+      $('[data-remaining]').textContent = `残り ${queue.length} 枚${on ? '・スワイプ: ← もう一度 / 速さで評価 →' : ''}`;
+      if (on) live.textContent = `答え: ${queue[0].card.a}`;
     };
 
-    card.addEventListener('click', () => flip(card.getAttribute('aria-pressed') !== 'true'));
+    const progress = () => {
+      const total = reviewed + queue.length;
+      const pct = total === 0 ? 100 : Math.round((reviewed / total) * 100);
+      $('[data-fill]').style.width = `${pct}%`;
+      $('[data-track]').setAttribute('aria-valuenow', String(pct));
+    };
 
-    root.querySelector('[data-next]')!.addEventListener('click', () => {
-      const flipped = card.getAttribute('aria-pressed') === 'true';
-      const swap = () => {
-        i = (i + 1) % cards.length;
-        q.textContent = cards[i].q;
-        a.textContent = cards[i].a;
-        count.textContent = `${i + 1} / ${cards.length}`;
-      };
-      // 答えが出たままなら、表に戻ってから中身を替える（裏の答えが先に見えないように）
-      if (flipped) {
-        flip(false);
-        setTimeout(swap, 260);
-      } else {
-        swap();
+    const show = () => {
+      const item = queue[0];
+      progress();
+      if (!item) {
+        finish();
+        return;
       }
+      $('[data-q]').textContent = item.card.q;
+      $('[data-q2]').textContent = item.card.q;
+      $('[data-a]').textContent = item.card.a;
+      $('[data-note]').textContent = item.card.note;
+      $('[data-new]').hidden = !item.isNew;
+      $('[data-phase]').textContent = `フェーズ ${item.reps}`;
+      const iv = intervals();
+      $('[data-iv="2"]').textContent = iv[2];
+      $('[data-iv="3"]').textContent = iv[3];
+      inner.style.transition = 'none';
+      setRevealed(false);
+      void inner.offsetWidth;
+      inner.style.transition = '';
+      drag.className = 'fc__drag';
+      drag.style.transform = '';
+      badge.hidden = true;
+      scene.classList.remove('is-enter');
+      void scene.offsetWidth;
+      scene.classList.add('is-enter');
+      shownAt = Date.now();
+    };
+
+    // 0 から目標値へ 900ms で数字とゲージを伸ばす（本物の useCountUp と同じ曲線）
+    const countUp = (target: number) => {
+      const arc = $('[data-arc]');
+      const label = $('[data-percent]');
+      const length = Math.PI * 90;
+      const start = performance.now();
+      const step = (now: number) => {
+        const r = Math.min(1, (now - start) / 900);
+        const v = target * (1 - Math.pow(1 - r, 3));
+        arc.setAttribute('stroke-dasharray', `${(length * v) / 100} ${length}`);
+        label.textContent = `${v >= 10 ? Math.round(v) : v.toFixed(1)}%`;
+        if (r < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+
+    const finish = () => {
+      study.hidden = true;
+      result.hidden = false;
+      $('[data-quit]').hidden = true;
+      const sum = [...reviewState.values()].reduce((t, reps) => t + Math.min(reps, PHASE_FULL), 0);
+      const percent = Math.min(100, (sum / (cards.length * PHASE_FULL)) * 100);
+      $('[data-gauge]').setAttribute('aria-label', `定着率 ${percent >= 10 ? Math.round(percent) : percent.toFixed(1)}%`);
+      const lines = reviewed === 0 ? ['まだ1枚も評価していません'] : comment(percent, gain);
+      $('[data-comment]').replaceChildren(...lines.map((t) => Object.assign(document.createElement('span'), { textContent: t })));
+      const retry = $<HTMLButtonElement>('[data-retry]');
+      retry.hidden = missed.length === 0;
+      retry.textContent = `間違えた ${missed.length} 枚をもう一度`;
+      countUp(percent);
+      (missed.length > 0 ? retry : $<HTMLButtonElement>('[data-finish]')).focus();
+    };
+
+    const start = (list: Card[], isNew: boolean) => {
+      queue = list.map((card) => ({ card, isNew, reps: isNew ? 0 : 1 }));
+      reviewed = 0;
+      gain = 0;
+      missed = [];
+      if (isNew) reviewState = new Map();
+      study.hidden = false;
+      result.hidden = true;
+      $('[data-quit]').hidden = false;
+      show();
+    };
+
+    // 評価する。「もう一度」は列の最後へ回し、ほかは列から外す
+    const rate = (rating: Rating) => {
+      const item = queue.shift();
+      if (!item) return;
+      reviewed += 1;
+      gain += 1;
+      const reps = item.reps + 1;
+      if (rating === 4) reviewState.set(item.card, reps);
+      if (rating === 1) {
+        queue.push({ card: item.card, isNew: false, reps });
+        if (!missed.includes(item.card)) missed.push(item.card);
+      }
+      live.textContent = `${LABELS[rating]}。残り ${queue.length} 枚`;
+      show();
+    };
+
+    // 評価が決まったカードを横へ飛ばしてから次へ（本物の flyOut と同じ向き）
+    const flyOut = (rating: Rating) => {
+      if (busy) return;
+      busy = true;
+      const dir = rating === 1 ? -1 : 1;
+      const dx = dir * (scene.clientWidth + 80);
+      drag.className = 'fc__drag is-fly';
+      drag.style.transform = `translateX(${dx}px) translateY(${Math.abs(dx) * 0.06}px) rotate(${dx * 0.06}deg)`;
+      // ボタンで評価したときは、次のカードの「答えを表示」へ戻す
+      const refocus = root.contains(document.activeElement) && rates.contains(document.activeElement);
+      window.setTimeout(() => {
+        busy = false;
+        rate(rating);
+        if (refocus && !study.hidden) reveal.focus();
+      }, FLY_MS);
+    };
+
+    const showBadge = (dx: number) => {
+      if (Math.abs(dx) <= 12) {
+        badge.hidden = true;
+        return;
+      }
+      const r: Rating = dx < 0 ? 1 : ratingFromElapsed(Date.now() - shownAt);
+      badge.hidden = false;
+      badge.dataset.side = dx < 0 ? 'left' : 'right';
+      badge.textContent = `${LABELS[r]}・${intervals()[r]}`;
+      badge.style.opacity = String(Math.min(1, Math.abs(dx) / SWIPE));
+    };
+
+    let pointer: { id: number; x: number; y: number; horizontal: boolean; moved: boolean } | null = null;
+    scene.addEventListener('pointerdown', (e) => {
+      if (busy) return;
+      pointer = { id: e.pointerId, x: e.clientX, y: e.clientY, horizontal: false, moved: false };
     });
+    scene.addEventListener('pointermove', (e) => {
+      if (!pointer || pointer.id !== e.pointerId) return;
+      const dx = e.clientX - pointer.x;
+      const dy = e.clientY - pointer.y;
+      // 一定以上動いたらめくりとは扱わない。答えを出す前はなぞっても評価しない（本物と同じ）
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) pointer.moved = true;
+      if (!revealed) return;
+      if (!pointer.horizontal) {
+        if (Math.abs(dx) < 12 || Math.abs(dx) < Math.abs(dy)) return;
+        pointer.horizontal = true;
+        scene.setPointerCapture(e.pointerId);
+      }
+      drag.className = 'fc__drag';
+      drag.style.transform = `translateX(${dx}px) translateY(${Math.abs(dx) * 0.06}px) rotate(${dx * 0.06}deg)`;
+      showBadge(dx);
+    });
+    const end = (e: PointerEvent, cancel: boolean) => {
+      if (!pointer || pointer.id !== e.pointerId) return;
+      const dx = e.clientX - pointer.x;
+      const { moved, horizontal } = pointer;
+      pointer = null;
+      if (!moved) return;
+      scene.dataset.eatClick = 'true';
+      if (!horizontal) return;
+      if (!cancel && Math.abs(dx) >= SWIPE) {
+        flyOut(dx < 0 ? 1 : ratingFromElapsed(Date.now() - shownAt));
+        return;
+      }
+      badge.hidden = true;
+      drag.className = 'fc__drag is-settle';
+      drag.style.transform = '';
+    };
+    scene.addEventListener('pointerup', (e) => end(e, false));
+    scene.addEventListener('pointercancel', (e) => end(e, true));
+    scene.addEventListener('click', () => {
+      if (scene.dataset.eatClick) {
+        delete scene.dataset.eatClick;
+        return;
+      }
+      if (!busy) setRevealed(!revealed);
+    });
+
+    reveal.addEventListener('click', () => {
+      setRevealed(true);
+      rates.querySelector<HTMLButtonElement>('[data-rate="3"]')!.focus();
+    });
+    rates.querySelectorAll<HTMLButtonElement>('[data-rate]').forEach((b) =>
+      b.addEventListener('click', () => flyOut(Number(b.dataset.rate) as Rating)),
+    );
+    $('[data-quit]').addEventListener('click', finish);
+    $('[data-retry]').addEventListener('click', () => {
+      start([...missed], false);
+      reveal.focus();
+    });
+    $('[data-finish]').addEventListener('click', () => {
+      start(cards, true);
+      reveal.focus();
+    });
+
+    start(cards, true);
+    scene.classList.remove('is-enter');
   });
 </script>

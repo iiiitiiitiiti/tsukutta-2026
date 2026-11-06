@@ -1,209 +1,735 @@
 ---
-// 得点板の小さな実物。3問正解で勝ち抜け、2回間違えると失格
+// 得点板の小さな実物。本物の解答者カード（m○n× のルール）を3枚並べた縮小版。
+// 色・大きさ・角の丸み・札・ロック・得点順の並べ替え・WINNER 画面は本物の値を写した。
+// 本物から変えたのは、文字が背景との差4.5:1を割る所だけ（/3 の小さな数字・札・得点順の押した色）
 const players = ['Aさん', 'Bさん', 'Cさん'];
+const M = 3;
+const N = 2;
 ---
-<div class="sb" data-sb>
-  <p class="sb__rule">3問正解で勝ち抜け、2回間違えると失格</p>
-  <ul class="sb__list">
-    {players.map((name) => (
-      <li class="sb__row" data-row>
-        <span class="sb__name">{name}</span>
-        <span class="sb__marks" aria-hidden="true">
-          <span class="sb__o" data-o></span><span class="sb__x" data-x></span>
-        </span>
-        <span class="sr-only" data-score>正解0回、誤答0回</span>
-        <span class="sb__state" data-state aria-live="polite"></span>
-        <span class="sb__buttons">
-          <button type="button" class="sb__btn sb__btn--o" data-hit="o" aria-label={`${name}の正解`}>○</button>
-          <button type="button" class="sb__btn sb__btn--x" data-hit="x" aria-label={`${name}の誤答`}>×</button>
-        </span>
+<div class="qs" data-qs data-m={M} data-n={N}>
+  <div class="qs__bar">
+    <span class="qs__rule">ルール: {M}○{N}✕</span>
+    <button type="button" class="qs__tool qs__tool--sort" data-sort aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 16 4 4 4-4" /><path d="M7 20V4" /><path d="m21 8-4-4-4 4" /><path d="M17 4v16" /></svg>
+      <span data-sort-label>得点順</span>
+    </button>
+    <button type="button" class="qs__tool" data-reset>スコアリセット</button>
+  </div>
+
+  <ul class="qs__grid" data-grid>
+    {players.map((name, i) => (
+      <li class="qs__card" data-card data-index={i}>
+        <span class="qs__locked" aria-hidden="true"><b>LOCKED</b></span>
+        <div class="qs__icons">
+          <button type="button" class="qs__icon" data-lock aria-label={`${name} をロック`} aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path data-shackle d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+          </button>
+          <button type="button" class="qs__icon qs__icon--trophy" data-trophy aria-label={`${name} を優勝者に設定`}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" /><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" /><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" /></svg>
+          </button>
+        </div>
+        <p class="qs__name" data-name>{name}</p>
+        <div class="qs__badges" data-badges></div>
+        <div class="qs__score" aria-hidden="true">
+          <span class="qs__mk qs__ok">○</span><span class="qs__num qs__ok" data-c>0</span><span class="qs__max qs__ok-dim">/{M}</span>
+          <span class="qs__divider"></span>
+          <span class="qs__mk qs__ng">✕</span><span class="qs__num qs__ng" data-w>0</span><span class="qs__max qs__ng-dim">/{N}</span>
+        </div>
+        <div class="qs__buttons">
+          <button type="button" class="qs__btn qs__btn--ok" data-hit="correct" aria-label={`${name} に○`}>○</button>
+          <button type="button" class="qs__btn qs__btn--ng" data-hit="wrong" aria-label={`${name} に✕`}>✕</button>
+        </div>
       </li>
     ))}
   </ul>
-  <button type="button" class="sb__reset" data-reset>最初から</button>
-  <div class="sb__confetti" data-confetti aria-hidden="true"></div>
+  <p class="sr-only" aria-live="polite" data-live></p>
+
+  <div class="qs__win" data-win hidden>
+    <canvas class="qs__confetti" data-confetti aria-hidden="true"></canvas>
+    <button type="button" class="qs__win-x" data-close aria-label="閉じる">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+    </button>
+    <div class="qs__win-card" role="dialog" aria-modal="true" aria-labelledby="qs-win-name">
+      <p class="qs__win-cup" aria-hidden="true">🏆</p>
+      <div>
+        <p class="qs__win-label">W I N N E R</p>
+        <p class="qs__win-name" id="qs-win-name" data-win-name></p>
+      </div>
+      <p class="qs__win-score" data-win-score></p>
+      <button type="button" class="qs__win-back" data-back>スコアボードに戻る</button>
+    </div>
+  </div>
 </div>
 
 <style>
-  .sb {
+  /* 本物の得点板の色（tailwind の theme をそのまま） */
+  .qs {
+    --stage: #f1f5f9;
+    --panel: #ffffff;
+    --edge: #e2e8f0;
+    --lamp: #d97706;
+    --qs-ink: #1e293b;
+    --qs-dim: #64748b;
+    --ok: #059669;
+    --ng: #ef4444;
+
     position: relative;
+    container: qs / inline-size;
     overflow: hidden;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--stage);
+    color: var(--qs-ink);
+    font-family: 'Noto Sans JP Variable', 'Noto Sans JP', sans-serif;
+    line-height: 1.5;
   }
 
-  .sb__rule {
-    margin: 0 0 12px;
-    font-size: 14px;
+  .qs :focus-visible {
+    outline: 2px solid var(--qs-ink);
+    outline-offset: 2px;
   }
 
-  .sb__list {
-    display: grid;
+  .qs__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 8px;
-    margin: 0 0 12px;
+    margin-bottom: 12px;
+  }
+
+  .qs__rule {
+    margin-right: auto;
+    padding: 6px 12px;
+    border: 1px solid var(--edge);
+    border-radius: 12px;
+    background: var(--panel);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .qs__tool {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 6px 12px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--panel);
+    color: var(--qs-dim);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 150ms, color 150ms;
+  }
+
+  .qs__tool:hover {
+    background: var(--edge);
+    color: var(--qs-ink);
+  }
+
+  .qs__tool svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  /* 本物は得点順の間、カードのアイコンと○✕を隠す（並び替えを見せるだけの状態） */
+  .qs[data-sorted='true'] .qs__icons,
+  .qs[data-sorted='true'] .qs__buttons {
+    visibility: hidden;
+  }
+
+  /* 本物は押すとアンバー地に薄い文字。そのままだと差が2.91なので、濃いアンバーに白にした */
+  .qs__tool--sort[aria-pressed='true'] {
+    background: #b45309;
+    color: #fff;
+  }
+
+  .qs svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* 本物はスマホで2列、広い画面で3列以上 */
+  .qs__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  .sb__row {
-    display: grid;
-    grid-template-columns: 4.5em 1fr auto;
-    grid-template-areas: 'name marks buttons' 'name state buttons';
-    align-items: center;
-    gap: 0 8px;
-    padding: 8px 10px;
-    border-radius: 6px;
-    background: #f6f7f9;
-    transition: background-color 300ms, opacity 300ms;
+  /* スマホの年表の中は本物の画面より狭い。2列だと数字がはみ出すので1列にする */
+  @container qs (max-width: 330px) {
+    .qs__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
-  .sb__row[data-done='win'] {
-    background: #fff4c9;
+  @container qs (min-width: 420px) {
+    .qs__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 
-  /* 失格の行は文字を淡い色にする（opacity だと文字の差が4.5:1を割る） */
-  .sb__row[data-done='out'] {
-    color: var(--ink-soft);
-  }
-
-  .sb__name {
-    grid-area: name;
-    font-weight: 700;
-  }
-
-  .sb__marks {
-    grid-area: marks;
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    line-height: 1.3;
-  }
-
-  .sb__o {
-    color: #c23b3b;
-  }
-
-  .sb__x {
-    color: #3a5fb0;
-  }
-
-  .sb__state {
-    grid-area: state;
-    min-height: 1.4em;
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1.4;
-  }
-
-  .sb__buttons {
-    grid-area: buttons;
+  .qs__card {
+    position: relative;
     display: flex;
-    gap: 6px;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px 12px;
+    border: 1px solid var(--edge);
+    border-radius: 16px;
+    background: var(--panel);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: border-color 150ms, box-shadow 150ms;
   }
 
-  .sb__btn {
-    width: 44px;
-    height: 44px;
-    border: 0;
-    border-radius: 50%;
-    color: #fff;
-    font-size: 20px;
-    font-weight: 700;
-    cursor: pointer;
+  .qs__card[data-finish='won'] {
+    border-color: var(--lamp);
+    box-shadow: 0 0 0 2px rgb(217 119 6 / 0.3), 0 4px 6px -1px rgb(0 0 0 / 0.1);
   }
 
-  .sb__btn:disabled {
-    cursor: default;
-    opacity: 0.35;
+  /* 本物はロック中・失格を半透明にする。文字の差が割れるので、灰色にするだけにした */
+  .qs__card[data-locked='true'],
+  .qs__card[data-finish='out'] {
+    border-color: rgb(100 116 139 / 0.5);
+    filter: grayscale(1);
   }
 
-  .sb__btn--o {
-    background: #c23b3b;
-  }
-
-  .sb__btn--x {
-    background: #3a5fb0;
-  }
-
-  .sb__btn:not(:disabled):active {
-    scale: 0.92;
-  }
-
-  .sb__reset {
-    padding: 8px 16px;
-    border: 1px solid var(--ink-soft);
-    border-radius: 999px;
-    background: transparent;
-    color: var(--ink);
-    font: inherit;
-    font-size: 14px;
-    cursor: pointer;
-  }
-
-  .sb__confetti {
+  .qs__locked {
     position: absolute;
     inset: 0;
+    z-index: 3;
+    display: none;
+    place-items: center;
     pointer-events: none;
   }
 
-  .sb__confetti :global(i) {
+  .qs__card[data-locked='true'] .qs__locked {
+    display: grid;
+  }
+
+  .qs__locked b {
+    padding: 2px 12px;
+    border: 2px solid rgb(255 255 255 / 0.7);
+    border-radius: 4px;
+    background: rgb(0 0 0 / 0.55);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    rotate: -12deg;
+  }
+
+  .qs__icons {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    justify-content: flex-end;
+    gap: 2px;
+    width: 100%;
+  }
+
+  .qs__icon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--qs-dim);
+    cursor: pointer;
+    transition: background-color 150ms, color 150ms;
+  }
+
+  .qs__icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .qs__icon:hover {
+    background: var(--edge);
+    color: var(--qs-ink);
+  }
+
+  .qs__icon--trophy:hover {
+    background: rgb(217 119 6 / 0.15);
+    color: #b45309;
+  }
+
+  .qs__icon[aria-pressed='true'] {
+    color: #b45309;
+  }
+
+  .qs__name {
+    width: 100%;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.375;
+    text-align: center;
+  }
+
+  .qs__badges {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+  }
+
+  .qs__badges :global(span) {
+    padding: 2px 8px;
+    border: 1px solid;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    animation: badge-in 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .qs__badges :global([data-tone='lamp']) {
+    border-color: rgb(217 119 6 / 0.4);
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .qs__badges :global([data-tone='ng']) {
+    border-color: rgb(239 68 68 / 0.4);
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  .qs__score {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 56px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .qs__mk {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .qs__num {
+    font-size: 32px;
+    font-weight: 900;
+  }
+
+  .qs__max {
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .qs__ok {
+    color: var(--ok);
+  }
+
+  .qs__ng {
+    color: var(--ng);
+  }
+
+  /* 本物は ok・ng を70%の濃さで出す。小さい文字なので濃い色に置きかえた */
+  .qs__ok-dim {
+    color: #047857;
+  }
+
+  .qs__ng-dim {
+    color: #b91c1c;
+  }
+
+  .qs__divider {
+    width: 1px;
+    height: 28px;
+    margin: 0 4px;
+    background: var(--edge);
+  }
+
+  .qs__num.is-bump {
+    animation: bump 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .qs__buttons {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .qs__btn {
+    flex: 1;
+    min-height: 44px;
+    border: 1px solid;
+    border-radius: 12px;
+    font: inherit;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 150ms, scale 100ms;
+  }
+
+  .qs__btn:active:not(:disabled) {
+    scale: 0.95;
+  }
+
+  .qs__btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .qs__btn--ok {
+    border-color: rgb(5 150 105 / 0.4);
+    background: rgb(5 150 105 / 0.15);
+    color: var(--ok);
+  }
+
+  .qs__btn--ok:hover:not(:disabled) {
+    background: rgb(5 150 105 / 0.3);
+  }
+
+  .qs__btn--ng {
+    border-color: rgb(239 68 68 / 0.4);
+    background: rgb(239 68 68 / 0.15);
+    color: var(--ng);
+  }
+
+  .qs__btn--ng:hover:not(:disabled) {
+    background: rgb(239 68 68 / 0.3);
+  }
+
+  /* WINNER 画面。本物は画面いっぱいだが、ここでは得点板の枠の中に出す */
+  .qs__win {
     position: absolute;
-    top: -12px;
-    width: 8px;
-    height: 12px;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: linear-gradient(135deg, rgb(10 10 40 / 0.92) 0%, rgb(40 10 60 / 0.95) 100%);
+    animation: win-in 300ms ease-out;
+  }
+
+  .qs__win[hidden] {
+    display: none;
+  }
+
+  .qs__confetti {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .qs__win-x {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.1);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .qs__win-x svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .qs__win-card {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: min(100%, 300px);
+    padding: 28px 24px;
+    border: 2px solid rgb(255 215 0 / 0.4);
+    border-radius: 24px;
+    background: linear-gradient(160deg, #1a1a3e 0%, #2d1b4e 100%);
+    box-shadow: 0 0 60px rgb(255 215 0 / 0.2), 0 20px 60px rgb(0 0 0 / 0.5);
+    text-align: center;
+    animation: card-in 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .qs__win-cup {
+    margin: 0;
+    font-size: 56px;
+    line-height: 1;
+    filter: drop-shadow(0 0 20px rgb(255 215 0 / 0.8));
+  }
+
+  .qs__win-label {
+    margin: 0 0 6px;
+    color: rgb(255 215 0 / 0.7);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+  }
+
+  .qs__win-name {
+    margin: 0;
+    color: #ffd700;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.25;
+    text-shadow: 0 0 30px rgb(255 215 0 / 0.6), 0 2px 4px rgb(0 0 0 / 0.5);
+  }
+
+  .qs__win-score {
+    margin: 0;
+    padding: 6px 20px;
+    border: 1px solid rgb(255 215 0 / 0.3);
+    border-radius: 999px;
+    background: rgb(255 215 0 / 0.15);
+    color: #ffe55c;
+    font-size: 18px;
+    font-weight: 700;
+    white-space: pre;
+  }
+
+  .qs__win-back {
+    padding: 10px 28px;
+    border: 1px solid rgb(255 255 255 / 0.2);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.1);
+    color: rgb(255 255 255 / 0.75);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .qs__win-back:hover {
+    background: rgb(255 255 255 / 0.18);
+  }
+
+  .qs__win :focus-visible {
+    outline-color: #fff;
+  }
+
+  @keyframes bump {
+    40% {
+      scale: 1.3;
+    }
+  }
+
+  @keyframes badge-in {
+    from {
+      scale: 0.4;
+      opacity: 0;
+    }
+  }
+
+  @keyframes win-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes card-in {
+    from {
+      scale: 0.6;
+      opacity: 0;
+    }
   }
 </style>
 
 <script>
-  const colors = ['#c23b3b', '#e6b422', '#3a5fb0', '#5f9b6b', '#b0569e'];
+  import { launchConfetti } from '../../lib/confetti';
 
-  document.querySelectorAll<HTMLElement>('[data-sb]').forEach((root) => {
-    const confetti = root.querySelector<HTMLElement>('[data-confetti]')!;
-    const rows = [...root.querySelectorAll<HTMLElement>('[data-row]')].map((row) => ({ row, o: 0, x: 0 }));
+  type Finish = '' | 'won' | 'out';
+  interface Player {
+    card: HTMLElement;
+    name: string;
+    index: number;
+    correct: number;
+    wrong: number;
+    locked: boolean;
+    finish: Finish;
+    order: number;
+  }
 
-    const burst = () => {
-      for (let i = 0; i < 40; i += 1) {
-        const p = document.createElement('i');
-        p.style.left = `${Math.random() * 100}%`;
-        p.style.background = colors[i % colors.length];
-        confetti.append(p);
-        const fall = root.offsetHeight + 24;
-        const drift = (Math.random() - 0.5) * 120;
-        p.animate(
-          [
-            { transform: 'translate(0, 0) rotate(0deg)' },
-            { transform: `translate(${drift}px, ${fall}px) rotate(${360 + Math.random() * 360}deg)` },
-          ],
-          { duration: 1400 + Math.random() * 900, easing: 'cubic-bezier(0.3, 0.6, 0.6, 1)', delay: Math.random() * 200 },
-        ).onfinish = () => p.remove();
+  document.querySelectorAll<HTMLElement>('[data-qs]').forEach((root) => {
+    const m = Number(root.dataset.m);
+    const n = Number(root.dataset.n);
+    const grid = root.querySelector<HTMLElement>('[data-grid]')!;
+    const live = root.querySelector<HTMLElement>('[data-live]')!;
+    const sortBtn = root.querySelector<HTMLButtonElement>('[data-sort]')!;
+    const sortLabel = root.querySelector<HTMLElement>('[data-sort-label]')!;
+    const win = root.querySelector<HTMLElement>('[data-win]')!;
+    const canvas = root.querySelector<HTMLCanvasElement>('[data-confetti]')!;
+    let sorted = false;
+    let wonCount = 0;
+    let stopConfetti = () => {};
+    let opener: HTMLElement | null = null;
+
+    const players: Player[] = [...root.querySelectorAll<HTMLElement>('[data-card]')].map((card, index) => ({
+      card,
+      name: card.querySelector('[data-name]')!.textContent ?? '',
+      index,
+      correct: 0,
+      wrong: 0,
+      locked: false,
+      finish: '',
+      order: 0,
+    }));
+
+    // 本物の ScoreBoard と同じ FLIP。並べ替える前の位置から、新しい位置へ350msで動かす
+    const reorder = () => {
+      const first = new Map(players.map((p) => [p, p.card.getBoundingClientRect()]));
+      const list = sorted
+        ? [...players].sort((a, b) => b.correct - a.correct || a.wrong - b.wrong || a.index - b.index)
+        : [...players].sort((a, b) => a.index - b.index);
+      list.forEach((p) => grid.append(p.card));
+      list.forEach((p) => {
+        const before = first.get(p)!;
+        const after = p.card.getBoundingClientRect();
+        const dx = before.left - after.left;
+        const dy = before.top - after.top;
+        if (dx || dy) {
+          p.card.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], {
+            duration: 350,
+            easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          });
+        }
+      });
+    };
+
+    const bump = (el: Element) => {
+      el.classList.remove('is-bump');
+      void (el as HTMLElement).offsetWidth;
+      el.classList.add('is-bump');
+    };
+
+    const render = (p: Player) => {
+      const c = p.card;
+      c.querySelector('[data-c]')!.textContent = String(p.correct);
+      c.querySelector('[data-w]')!.textContent = String(p.wrong);
+      c.dataset.finish = p.finish;
+      c.dataset.locked = String(p.locked);
+      const badges = c.querySelector<HTMLElement>('[data-badges]')!;
+      badges.replaceChildren();
+      if (p.finish) {
+        const b = document.createElement('span');
+        b.dataset.tone = p.finish === 'won' ? 'lamp' : 'ng';
+        b.textContent = p.finish === 'won' ? `${p.order}抜け` : '失格';
+        badges.append(b);
       }
+      const lock = c.querySelector<HTMLButtonElement>('[data-lock]')!;
+      lock.setAttribute('aria-pressed', String(p.locked));
+      lock.setAttribute('aria-label', p.locked ? `${p.name} のロックを解除` : `${p.name} をロック`);
+      c.querySelector('[data-shackle]')!.setAttribute('d', p.locked ? 'M7 11V7a5 5 0 0 1 9.9-1' : 'M7 11V7a5 5 0 0 1 10 0v4');
+      const stop = p.locked || p.finish !== '';
+      c.querySelectorAll<HTMLButtonElement>('[data-hit]').forEach((b) => (b.disabled = stop));
     };
 
-    const render = (s: (typeof rows)[number]) => {
-      s.row.querySelector('[data-o]')!.textContent = '○'.repeat(s.o);
-      s.row.querySelector('[data-x]')!.textContent = '×'.repeat(s.x);
-      s.row.querySelector('[data-score]')!.textContent = `正解${s.o}回、誤答${s.x}回`;
-      const done = s.o >= 3 ? 'win' : s.x >= 2 ? 'out' : '';
-      s.row.dataset.done = done;
-      s.row.querySelector('[data-state]')!.textContent = done === 'win' ? '勝ち抜け' : done === 'out' ? '失格' : '';
-      s.row.querySelectorAll<HTMLButtonElement>('button').forEach((b) => (b.disabled = done !== ''));
+    const say = (p: Player) => {
+      const state = p.finish === 'won' ? `、${p.order}抜け` : p.finish === 'out' ? '、失格' : '';
+      live.textContent = `${p.name} ○${p.correct} ✕${p.wrong}${state}`;
     };
 
-    rows.forEach((s) => {
-      s.row.querySelectorAll<HTMLButtonElement>('[data-hit]').forEach((btn) =>
+    players.forEach((p) => {
+      p.card.querySelectorAll<HTMLButtonElement>('[data-hit]').forEach((btn) =>
         btn.addEventListener('click', () => {
-          if (btn.dataset.hit === 'o') s.o += 1;
-          else s.x += 1;
-          render(s);
-          if (s.o === 3) burst();
+          if (p.locked || p.finish) return;
+          if (btn.dataset.hit === 'correct') {
+            p.correct += 1;
+            bump(p.card.querySelector('[data-c]')!);
+            if (p.correct >= m) {
+              wonCount += 1;
+              p.finish = 'won';
+              p.order = wonCount;
+            }
+          } else {
+            p.wrong += 1;
+            bump(p.card.querySelector('[data-w]')!);
+            if (p.wrong >= n) p.finish = 'out';
+          }
+          render(p);
+          say(p);
         }),
       );
+
+      p.card.querySelector('[data-lock]')!.addEventListener('click', () => {
+        p.locked = !p.locked;
+        render(p);
+      });
+
+      p.card.querySelector<HTMLButtonElement>('[data-trophy]')!.addEventListener('click', (e) => {
+        opener = e.currentTarget as HTMLElement;
+        root.querySelector('[data-win-name]')!.textContent = p.name;
+        root.querySelector('[data-win-score]')!.textContent = `○ ${p.correct}  ✕ ${p.wrong}`;
+        win.hidden = false;
+        root.querySelector<HTMLButtonElement>('[data-back]')!.focus();
+        stopConfetti = launchConfetti(canvas);
+      });
+    });
+
+    const close = () => {
+      if (win.hidden) return;
+      stopConfetti();
+      win.hidden = true;
+      opener?.focus();
+    };
+    root.querySelector('[data-close]')!.addEventListener('click', close);
+    root.querySelector('[data-back]')!.addEventListener('click', close);
+    win.addEventListener('click', (e) => {
+      if (e.target === win || e.target === canvas) close();
+    });
+    // 開いている間は Tab で覆いの外へ出ない（× と「戻る」の2つを行き来する）
+    win.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') close();
+      if (e.key !== 'Tab') return;
+      const x = root.querySelector<HTMLButtonElement>('[data-close]')!;
+      const back = root.querySelector<HTMLButtonElement>('[data-back]')!;
+      if (e.shiftKey && document.activeElement === x) {
+        e.preventDefault();
+        back.focus();
+      } else if (!e.shiftKey && document.activeElement === back) {
+        e.preventDefault();
+        x.focus();
+      }
+    });
+
+    sortBtn.addEventListener('click', () => {
+      sorted = !sorted;
+      sortBtn.setAttribute('aria-pressed', String(sorted));
+      sortLabel.textContent = sorted ? '元の順序に戻す' : '得点順';
+      root.dataset.sorted = String(sorted);
+      reorder();
     });
 
     root.querySelector('[data-reset]')!.addEventListener('click', () => {
-      rows.forEach((s) => {
-        s.o = 0;
-        s.x = 0;
-        render(s);
+      wonCount = 0;
+      players.forEach((p) => {
+        p.correct = 0;
+        p.wrong = 0;
+        p.finish = '';
+        p.order = 0;
+        render(p);
       });
+      live.textContent = 'スコアをリセットしました';
+      if (sorted) reorder();
     });
   });
 </script>

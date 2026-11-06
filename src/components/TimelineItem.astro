@@ -16,14 +16,15 @@ interface Props {
   tools: Extra[];
   side: 'left' | 'right';
   first: boolean;
+  anchor: string;
 }
-const { month, day, title, paragraphs, tools, side, first } = Astro.props;
+const { month, day, title, paragraphs, tools, side, first, anchor } = Astro.props;
 const single = tools.length === 1 ? tools[0] : null;
 const counters = tools.filter((t) => t.counter);
 const demos = tools.filter((t) => t.demo);
 const shots = tools.filter((t) => !t.noShot);
 ---
-<article class="item" data-side={side} data-first={first}>
+<article class="item" id={anchor} data-side={side} data-first={first}>
   <span class="item__node" aria-hidden="true"></span>
   <div class="item__card">
     <p class="item__date"><span aria-hidden="true">{first && <><span class="item__m">{month}</span><span class="item__dot">.</span></>}<span class="item__d">{String(day).padStart(2, '0')}</span></span><span class="sr-only">{month}月{day}日</span></p>

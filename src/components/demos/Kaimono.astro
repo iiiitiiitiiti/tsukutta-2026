@@ -1,108 +1,1113 @@
 ---
-// かいものの小さな実物。チェックすると購入済みへ移り、押し直すと戻る
-const shops = [
-  { name: 'スーパー', items: ['牛乳', 'たまご', '食パン'] },
-  { name: 'ドラッグストア', items: ['歯みがき粉', 'ティッシュ'] },
+// かいものの小さな実物。本物の画面（上の帯・お店ごとのリスト・丸いチェック・購入済み・下の足す欄）を写した。
+// 品名からお店を当てる語の表・重複の知らせ・左になぞって消す・取り消しのトーストも本物の決まりのまま。
+// 本物から外したのは、メニュー・品物を直すシート・ほかの人との共有（この見本は手元だけで動く）
+const items = [
+  { name: '牛乳', note: '1本', section: 'スーパー', by: 'Aさん' },
+  { name: 'たまご', note: '10個入り', section: 'スーパー', by: 'Bさん' },
+  { name: '食パン', note: '6枚切り', section: 'スーパー', by: 'Aさん' },
+  { name: 'ティッシュ', note: '5箱', section: 'ドラッグストア', by: 'Bさん' },
+  { name: '歯ブラシ', note: '', section: 'ドラッグストア', by: 'Aさん' },
 ];
 ---
 <div class="km" data-km>
-  {shops.map((shop) => (
-    <section class="km__shop">
-      <h4 class="km__shop-name">{shop.name}</h4>
-      <ul class="km__list" data-list>
-        {shop.items.map((item) => (
-          <li class="km__item" data-item data-shop={shop.name}>
-            <label class="km__label">
-              <input type="checkbox" class="km__check" />
-              <span>{item}</span>
-            </label>
-          </li>
-        ))}
-      </ul>
-    </section>
-  ))}
-  <section class="km__shop km__shop--done">
-    <h4 class="km__shop-name">購入済み <span data-done-count>0</span>件</h4>
-    <ul class="km__list" data-done></ul>
-  </section>
+  <header class="km__top">
+    <p class="km__title">
+      <svg class="km__logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#2e8b57" /><path d="M17 24h30l-3 22a4 4 0 0 1-4 3.5H24A4 4 0 0 1 20 46z" fill="#fff" /><path d="M25 24a7 7 0 0 1 14 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" /></svg>
+      かいもの
+    </p>
+    <p class="km__count" aria-live="polite" data-count></p>
+  </header>
+
+  <div class="km__list" data-list></div>
+
+  <div class="km__toasts" aria-live="polite" data-toasts></div>
+
+  <form class="km__adder" data-adder>
+    <div class="km__picker" data-picker hidden>
+      <div class="km__picker-inner" role="group" aria-label="お店" data-picker-chips></div>
+    </div>
+    <div class="km__chips" role="group" aria-label="よく買う物" data-chips hidden></div>
+    <div class="km__row">
+      <label class="sr-only" for="km-name">買う物</label>
+      <input id="km-name" class="km__input" data-name placeholder="買う物を足す" autocomplete="off" maxlength="60" />
+      <button type="submit" class="km__btn km__add" data-add disabled>足す</button>
+    </div>
+    <div class="km__row km__extra" data-extra hidden>
+      <button type="button" class="km__section" data-section aria-expanded="false" aria-controls="km-picker">
+        <span data-section-name>その他</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" data-caret /></svg>
+      </button>
+      <label class="sr-only" for="km-note">数量・メモ</label>
+      <input id="km-note" class="km__input" data-note placeholder="数量・メモ" autocomplete="off" maxlength="100" />
+    </div>
+  </form>
+
+  <script type="application/json" data-items set:html={JSON.stringify(items)} />
 </div>
 
 <style>
+  /* 本物のかいものの色と動き（styles.css の :root） */
   .km {
-    display: grid;
-    gap: 12px;
+    --bg: #fbfaf6;
+    --km-surface: #ffffff;
+    --km-text: #1d211d;
+    --muted: #6a6f68;
+    --line: #e6e3da;
+    --accent: #2e8b57;
+    --accent-strong: #23704a;
+    --accent-soft: #e6f3ec;
+    --danger: #c0392b;
+    --flash: #fff3c4;
+    --km-shadow: 0 10px 30px -14px rgb(30 40 30 / 30%);
+    --focus: 0 0 0 3px var(--bg), 0 0 0 6px var(--accent);
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 480px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--km-text);
+    font-family: 'Noto Sans JP Variable', 'Noto Sans JP', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
   }
 
-  .km__shop-name {
-    margin: 0 0 6px;
-    font-size: 13px;
+  .km :focus-visible {
+    outline: none;
+    box-shadow: var(--focus);
+  }
+
+  .km button,
+  .km input {
+    font: inherit;
+    color: inherit;
+  }
+
+  .km svg {
+    flex: none;
+  }
+
+  .km__top {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 60px;
+    padding: 8px 12px 8px 16px;
+    border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(12px);
+  }
+
+  .km__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-size: 1.15rem;
     font-weight: 700;
-    color: var(--ink-soft);
+  }
+
+  .km__logo {
+    width: 28px;
+    height: 28px;
+  }
+
+  .km__count {
+    flex: 1;
+    margin: 0 0 0 8px;
+    color: var(--muted);
+    font-size: 0.9rem;
   }
 
   .km__list {
-    display: grid;
-    gap: 4px;
+    flex: 1;
+    min-height: 0;
+    padding: 0 16px 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .km__list :global(.group) {
+    margin-top: 16px;
+  }
+
+  /* 出てくる動きは新しく出た売り場と品物だけ（描き直しのたびに全部が動かないように） */
+  .km__list :global(.group.is-new) {
+    animation: rise 0.4s var(--ease-out);
+  }
+
+  .km__list :global(.sec) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 6px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .km__list :global(.sec::before) {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--dot, #9aa0a6);
+  }
+
+  .km__list :global(.items) {
     margin: 0;
     padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--km-surface);
     list-style: none;
   }
 
-  .km__item {
-    border-radius: 6px;
-    background: #f6f7f9;
+  /* 行を縮めて消すために grid の行の高さを 1fr→0fr にする */
+  .km__list :global(.item-wrap) {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.3s var(--ease-out), opacity 0.3s ease;
   }
 
-  .km__label {
+  .km__list :global(.item-wrap.is-new) {
+    animation: item-in 0.35s var(--ease-out);
+  }
+
+  .km__list :global(.item-wrap + .item-wrap .swipe) {
+    border-top: 1px solid var(--line);
+  }
+
+  .km__list :global(.item-wrap.leaving) {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition-delay: 0.12s;
+  }
+
+  .km__list :global(.swipe) {
+    position: relative;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .km__list :global(.swipe-actions) {
+    position: absolute;
+    inset: 0 0 0 auto;
+    display: flex;
+  }
+
+  .km__list :global(.swipe-delete) {
+    width: 72px;
+    border: 0;
+    background: #c0392b;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .km__list :global(.swipe-delete:focus-visible) {
+    outline: 3px solid var(--accent);
+    outline-offset: -3px;
+    box-shadow: none;
+  }
+
+  .km__list :global(.item) {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--km-surface);
+    touch-action: pan-y;
+    user-select: none;
+    transition: transform 0.25s var(--ease-out), background-color 0.6s ease;
+  }
+
+  .km__list :global(.item.dragging) {
+    transition: background-color 0.6s ease;
+  }
+
+  .km__list :global(.item :focus-visible) {
+    box-shadow: inset 0 0 0 3px var(--accent);
+  }
+
+  .km__list :global(.item.flash) {
+    background: var(--flash);
+  }
+
+  .km__list :global(.check) {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .km__list :global(.check svg) {
+    width: 28px;
+    height: 28px;
+    overflow: visible;
+  }
+
+  .km__list :global(.check circle) {
+    fill: transparent;
+    stroke: var(--line);
+    stroke-width: 2;
+    transition: fill 0.2s ease, stroke 0.2s ease;
+  }
+
+  .km__list :global(.check path) {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 16;
+    stroke-dashoffset: 16;
+    transition: stroke-dashoffset 0.25s var(--ease-out) 0.05s;
+  }
+
+  .km__list :global(.check:hover circle) {
+    stroke: var(--accent);
+  }
+
+  .km__list :global(.item.checked .check circle) {
+    fill: var(--accent);
+    stroke: var(--accent);
+  }
+
+  .km__list :global(.item.checked .check path) {
+    stroke-dashoffset: 0;
+  }
+
+  .km__list :global(.item.checked .check svg) {
+    animation: pop 0.35s var(--ease-spring);
+  }
+
+  .km__list :global(.item-body) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    padding: 10px 8px 10px 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .km__list :global(.name) {
+    font-size: 1.05rem;
+    overflow-wrap: anywhere;
+    transition: color 0.25s ease;
+  }
+
+  .km__list :global(.memo) {
+    color: var(--muted);
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+  }
+
+  .km__list :global(.item.checked .name) {
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent);
+  }
+
+  /* 足した人の札。本物は人の色の文字に13%の地。そのままだと差が4.5:1を割る色があるので、文字だけ2割暗くした */
+  .km__list :global(.who) {
+    flex: none;
+    max-width: 6.5em;
+    margin-right: 12px;
+    padding: 1px 9px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--pc) 13%, transparent);
+    color: color-mix(in srgb, var(--pc) 80%, #000);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 購入済み。ふだんは畳んでおき、買う物より控えめに見せる */
+  .km__list :global(.basket) {
+    position: relative;
+    margin-top: 28px;
+  }
+
+  .km__list :global(.basket-head) {
     display: flex;
     align-items: center;
     gap: 10px;
     min-height: 44px;
-    padding: 0 12px;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .km__list :global(.basket-head::-webkit-details-marker) {
+    display: none;
+  }
+
+  .km__list :global(.basket-head::after) {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    transform: rotate(45deg) translateY(-2px);
+    transition: transform 0.25s var(--ease-out);
+  }
+
+  .km__list :global(.basket[open] .basket-head::after) {
+    transform: rotate(-135deg) translateY(-2px);
+  }
+
+  .km__list :global(.basket-head .sec) {
+    margin: 0;
+  }
+
+  .km__list :global(.basket-head .sec::before) {
+    background: var(--line);
+  }
+
+  .km__list :global(.basket-clear) {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-height: 44px;
+    padding: 0 4px 0 12px;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
     cursor: pointer;
   }
 
-  .km__check {
-    width: 20px;
-    height: 20px;
-    accent-color: #2e7d5b;
+  .km__list :global(.basket-clear:hover) {
+    color: var(--danger);
   }
 
-  .km__shop--done .km__item {
-    background: transparent;
-    color: var(--ink-soft);
-    text-decoration: line-through;
+  /* 購入済みの数の札。本物の薄い灰の地に灰の文字（差4.23）を、少し濃い灰にした */
+  .km__list :global(.badge) {
+    display: inline-grid;
+    place-items: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #ebebe6;
+    color: #5c615a;
+    font-size: 0.75rem;
   }
 
-  .km__shop--done .km__list:empty {
+  .km__list :global(.basket .items),
+  .km__list :global(.basket .item:not(.flash)) {
+    background: var(--bg);
+  }
+
+  .km__list :global(.basket .name) {
+    font-size: 0.95rem;
+  }
+
+  .km__list :global(.basket .who) {
+    --pc: var(--muted);
+  }
+
+  .km__list :global(.basket .item.checked .check circle) {
+    fill: var(--muted);
+    stroke: var(--muted);
+  }
+
+  .km__list :global(.basket-group .sec) {
+    margin-top: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .km__list :global(.basket-group .sec::before) {
+    display: none;
+  }
+
+  .km__list :global(.empty) {
+    margin: 48px 0;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .km__toasts {
+    position: absolute;
+    top: 68px;
+    right: 0;
+    left: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    pointer-events: none;
+  }
+
+  .km__toasts :global(.toast) {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 10px 10px 18px;
+    border-radius: 14px;
+    background: var(--km-text);
+    color: var(--bg);
+    box-shadow: var(--km-shadow);
+    font-size: 0.92rem;
+    pointer-events: auto;
+    animation: toast-in 0.35s var(--ease-spring);
+  }
+
+  .km__toasts :global(.toast-action) {
+    min-height: 36px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--bg) 18%, transparent);
+    color: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .km__adder {
+    position: relative;
+    z-index: 6;
+    flex: none;
+    display: grid;
+    gap: 8px;
+    padding: 10px 12px 12px;
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(14px);
+  }
+
+  .km__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .km__row[hidden],
+  .km__chips[hidden],
+  .km__picker[hidden] {
+    display: none;
+  }
+
+  .km__extra {
+    animation: rise 0.25s var(--ease-out);
+  }
+
+  .km__input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--km-surface);
+    font-size: 1rem;
+  }
+
+  .km__input::placeholder {
+    color: var(--muted);
+  }
+
+  .km__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 44px;
-    border: 1px dashed var(--rule);
-    border-radius: 6px;
+    padding: 0 18px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--km-surface);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: transform 0.15s var(--ease-out), background-color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .km__btn:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+
+  .km__btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  /* 本物は #2e8b57 に白（差4.25）。白の文字が読めるよう、本物の濃い緑にした */
+  .km__add {
+    min-width: 72px;
+    border-color: var(--accent-strong);
+    background: var(--accent-strong);
+    color: #fff;
+  }
+
+  .km__section {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 46px;
+    padding: 0 10px 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--km-surface);
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+
+  .km__section svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .km__chips {
+    display: flex;
+    gap: 8px;
+    padding: 2px 2px 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    animation: rise 0.25s var(--ease-out);
+  }
+
+  .km :global(.chip) {
+    flex: none;
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--km-surface);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: transform 0.15s var(--ease-out);
+  }
+
+  .km :global(.chip:active) {
+    transform: scale(0.94);
+  }
+
+  .km__picker {
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    left: 0;
+    padding: 10px 12px;
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(14px);
+    animation: rise 0.25s var(--ease-out);
+  }
+
+  .km__picker-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .km__picker :global(.chip) {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 0.82rem;
+  }
+
+  .km__picker :global(.chip[aria-pressed='true']) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-weight: 700;
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  @keyframes item-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes pop {
+    40% {
+      transform: scale(1.25);
+    }
+  }
+
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(-16px) scale(0.96);
+    }
   }
 </style>
 
 <script>
-  document.querySelectorAll<HTMLElement>('[data-km]').forEach((root) => {
-    const done = root.querySelector<HTMLElement>('[data-done]')!;
-    const count = root.querySelector('[data-done-count]')!;
-    const lists = new Map<string, HTMLElement>();
-    root.querySelectorAll<HTMLElement>('[data-item]').forEach((item) => lists.set(item.dataset.shop!, item.parentElement!));
+  interface Item {
+    id: number;
+    name: string;
+    note: string;
+    section: string;
+    by: string;
+    checked: boolean;
+  }
 
-    // 移す前後の位置の差を、移したあとに戻して動かす（どこへ行ったか目で追えるように）
-    const move = (item: HTMLElement, to: HTMLElement) => {
-      const before = item.getBoundingClientRect();
-      to.append(item);
-      const after = item.getBoundingClientRect();
-      item.animate(
-        [{ transform: `translate(${before.left - after.left}px, ${before.top - after.top}px)` }, { transform: 'none' }],
-        { duration: 420, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
-      );
-      count.textContent = String(done.children.length);
+  const ME = 'Aさん';
+  const SECTIONS = ['スーパー', 'ドラッグストア', 'コンビニ', '100円ショップ', 'ホームセンター', '家電量販店', '服屋', '本屋', 'ネット通販', 'その他'];
+  const DOTS = ['#4caf50', '#e2574c', '#f2b632', '#c98b4b', '#8d6e63', '#4aa3df', '#e97fb0', '#7e8cc7', '#9c6ade', '#9aa0a6'];
+  const PEOPLE = ['#d9480f', '#1971c2', '#9c36b5', '#2b8a3e', '#c2255c', '#0c8599'];
+  // よく買う物（本物は買った回数の多い順。見本では決め打ち）
+  const HISTORY = [
+    { name: '牛乳', section: 'スーパー' },
+    { name: 'バナナ', section: 'スーパー' },
+    { name: '納豆', section: 'スーパー' },
+    { name: '洗剤', section: 'ドラッグストア' },
+    { name: '電池', section: '家電量販店' },
+  ];
+  // 品名からお店を当てる手がかり（本物の model.ts の表そのまま。前から順に照合する）
+  const HINTS: [string, string[]][] = [
+    ['服屋', ['服', 'シャツ', 'パンツ', 'ズボン', 'スカート', '靴下', 'くつした', '靴', '下着', 'ブラジャー', 'パジャマ', 'コート', 'ジャケット', 'セーター', 'パーカー', '帽子', '手袋', 'マフラー', '水着']],
+    ['本屋', ['雑誌', '漫画', 'マンガ', 'まんが', '絵本', '文庫', '小説', '参考書', '問題集']],
+    ['家電量販店', ['電池', '電球', '蛍光灯', 'ケーブル', '充電器', 'イヤホン', 'ヘッドホン', 'USB', 'SDカード', '延長コード', '電源タップ', 'インク', 'プリンター', 'ドライヤー', '家電', 'テレビ', 'パソコン', 'スマホ', 'マウス', 'キーボード']],
+    ['ホームセンター', ['ネジ', 'ねじ', '釘', 'くぎ', '工具', 'ドライバー', 'ペンキ', '塗料', '園芸', '培養土', '肥料', '植木鉢', 'プランター', '灯油', '木材', '突っ張り棒', '収納ケース', 'フライパン', 'ハンガー', '水筒']],
+    ['100円ショップ', ['食器', '皿', 'コップ', '茶碗', '箸', 'タッパー', '保存容器', '文房具', 'ノート', 'ボールペン', '油性ペン', '封筒']],
+    ['ドラッグストア', ['薬', '絆創膏', 'ばんそうこう', '目薬', 'マスク', 'シャンプー', 'リンス', 'コンディショナー', 'ボディソープ', '洗顔', '化粧', '日焼け止め', '歯磨き', '歯ブラシ', 'ブラシ', 'コンタクト', 'ハンドクリーム', 'リップ', 'ティッシュ', 'トイレット', 'ペーパー', '洗剤', '柔軟剤', 'ゴミ袋', 'ごみ袋', 'スポンジ', 'ハンドソープ', '漂白', '綿棒', '生理用品', 'おむつ', 'オムツ', 'サプリ', '香水']],
+    ['スーパー', ['冷凍', 'アイス', '卵', 'たまご', '玉子', '牛乳', 'ミルク', 'ヨーグルト', 'チーズ', 'バター', '豆腐', 'とうふ', '納豆', 'なっとう', '豆乳', '肉', '豚', '鶏', '牛', 'ひき', 'ベーコン', 'ハム', 'ソーセージ', 'ウインナー', '魚', '鮭', 'さけ', 'サーモン', 'まぐろ', 'さば', 'えび', 'エビ', 'いか', 'たこ', 'しらす', 'ちくわ', '刺身', '野菜', 'キャベツ', 'レタス', '白菜', 'はくさい', '大根', 'だいこん', '人参', 'にんじん', '玉ねぎ', 'たまねぎ', 'ねぎ', 'ネギ', 'じゃがいも', 'トマト', 'きゅうり', 'なす', 'ピーマン', 'ブロッコリー', 'ほうれん草', '小松菜', 'もやし', 'きのこ', 'しめじ', 'えのき', 'しいたけ', '生姜', 'しょうが', 'にんにく', 'かぼちゃ', 'アボカド', 'りんご', 'バナナ', 'みかん', 'いちご', 'レモン', '果物', 'フルーツ', 'パン', '米', 'ごはん', 'パスタ', 'うどん', 'そば', 'ラーメン', 'そうめん', '餅', 'もち', 'シリアル', '醤油', 'しょうゆ', '味噌', 'みそ', '塩', '砂糖', '酢', 'みりん', '酒', '油', 'マヨネーズ', 'ケチャップ', 'ソース', 'ドレッシング', 'だし', 'コンソメ', 'カレー', '胡椒', 'こしょう', '小麦粉', '片栗粉', '海苔', 'のり', 'わかめ', 'ごま', '缶', 'ツナ', 'ラップ', 'ホイル', 'お菓子', 'チョコ', 'クッキー', 'ポテチ', 'スナック', 'せんべい', 'グミ', '水', 'お茶', '茶', 'コーヒー', '紅茶', 'ジュース', '炭酸', 'ビール', 'ワイン']],
+  ];
+
+  const nameKey = (name: string) =>
+    name
+      .normalize('NFKC')
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+  const cleanName = (raw: string) => raw.normalize('NFKC').replace(/\s+/g, ' ').trim().slice(0, 60) || null;
+  const guessSection = (name: string) => {
+    const past = HISTORY.find((h) => nameKey(h.name) === nameKey(name));
+    if (past) return past.section;
+    const raw = name.normalize('NFKC');
+    const key = nameKey(name);
+    for (const [section, words] of HINTS) {
+      if (words.some((w) => raw.includes(w) || key.includes(nameKey(w)))) return section;
+    }
+    return 'その他';
+  };
+  const personColor = (name: string) => {
+    let h = 0;
+    for (const ch of name) h = (h * 31 + ch.codePointAt(0)!) >>> 0;
+    return PEOPLE[h % PEOPLE.length];
+  };
+  const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = '') => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text) e.textContent = text;
+    return e;
+  };
+  const CHECK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M7 12.5l3.2 3.2L17 9" /></svg>';
+
+  document.querySelectorAll<HTMLElement>('[data-km]').forEach((root) => {
+    const $ = <T extends HTMLElement = HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+    const list = $('[data-list]');
+    const toasts = $('[data-toasts]');
+    const adder = $<HTMLFormElement>('[data-adder]');
+    const nameInput = $<HTMLInputElement>('[data-name]');
+    const noteInput = $<HTMLInputElement>('[data-note]');
+    const addBtn = $<HTMLButtonElement>('[data-add]');
+    const extra = $('[data-extra]');
+    const chipsBox = $('[data-chips]');
+    const picker = $('[data-picker]');
+    picker.id = 'km-picker';
+    const sectionBtn = $<HTMLButtonElement>('[data-section]');
+
+    let nextId = 1;
+    let items: Item[] = (JSON.parse($('[data-items]').textContent!) as Omit<Item, 'id' | 'checked'>[]).map((i) => ({ ...i, id: nextId++, checked: false }));
+    let leaving = new Set<number>();
+    let flash: number | null = null;
+    let swiped: number | null = null;
+    let basketOpen = false;
+    // 前に描いた品物と売り場。新しく出たものにだけ出てくる動きを付ける
+    let drawnIds = new Set<number>();
+    let drawnGroups = new Set<string>();
+    let picked: string | null = null;
+    let picking = false;
+    let focused = false;
+
+    const toast = (message: string, action?: { label: string; run: () => void }) => {
+      toasts.replaceChildren();
+      const t = el('div', 'toast');
+      t.append(el('span', '', message));
+      if (action) {
+        const b = el('button', 'toast-action', action.label);
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          action.run();
+          t.remove();
+        });
+        t.append(b);
+      }
+      toasts.append(t);
+      window.setTimeout(() => t.remove(), 4000);
     };
 
-    root.querySelectorAll<HTMLElement>('[data-item]').forEach((item) => {
-      const box = item.querySelector<HTMLInputElement>('input')!;
-      box.addEventListener('change', () => move(item, box.checked ? done : lists.get(item.dataset.shop!)!));
+    const row = (item: Item, inBasket: boolean) => {
+      const li = el('li', drawnIds.has(item.id) ? 'item-wrap' : 'item-wrap is-new');
+      li.dataset.id = String(item.id);
+      if (leaving.has(item.id)) li.classList.add('leaving');
+      const swipe = el('div', 'swipe');
+      const actions = el('div', 'swipe-actions');
+      actions.setAttribute('aria-hidden', String(swiped !== item.id));
+      const del = el('button', 'swipe-delete', '消す');
+      del.type = 'button';
+      del.tabIndex = swiped === item.id ? 0 : -1;
+      del.addEventListener('click', () => {
+        swiped = null;
+        removeWithUndo([item], `「${item.name}」を消しました`);
+        nameInput.focus({ preventScroll: true });
+      });
+      actions.append(del);
+      const rowEl = el('div', `item${item.checked || leaving.has(item.id) ? ' checked' : ''}${flash === item.id ? ' flash' : ''}`);
+      if (swiped === item.id) rowEl.style.transform = 'translateX(-72px)';
+      const check = el('button', 'check');
+      check.type = 'button';
+      check.setAttribute('role', 'checkbox');
+      check.setAttribute('aria-checked', String(item.checked));
+      check.setAttribute('aria-label', item.name);
+      check.innerHTML = CHECK_SVG;
+      check.disabled = leaving.has(item.id);
+      check.addEventListener('click', () => toggle(item));
+      // 本物は品名を押すと直すシートが開き、そこで消せる。見本ではシートの代わりに「消す」を出す
+      const body = el('button', 'item-body');
+      body.type = 'button';
+      body.setAttribute('aria-label', `「${item.name}」の消すボタンを出す`);
+      body.setAttribute('aria-expanded', String(swiped === item.id));
+      body.addEventListener('click', () => {
+        const opening = swiped !== item.id;
+        setSwiped(opening ? item.id : null);
+        if (opening) del.focus({ preventScroll: true });
+      });
+      body.append(el('span', 'name', item.name));
+      if (item.note) body.append(el('span', 'memo', item.note));
+      rowEl.append(check, body);
+      if (item.by) {
+        const who = el('span', 'who', item.by);
+        if (!inBasket) who.style.setProperty('--pc', personColor(item.by));
+        rowEl.append(who);
+      }
+      bindSwipe(rowEl, item);
+      swipe.append(actions, rowEl);
+      li.append(swipe);
+      return li;
+    };
+
+    const group = (section: string, list: Item[], inBasket: boolean) => {
+      const sec = el('section', inBasket ? 'basket-group' : drawnGroups.has(section) ? 'group' : 'group is-new');
+      const h = el(inBasket ? 'h5' : 'h4', 'sec', section);
+      if (!inBasket) h.style.setProperty('--dot', DOTS[SECTIONS.indexOf(section)]);
+      const ul = el('ul', 'items');
+      list.forEach((i) => ul.append(row(i, inBasket)));
+      sec.append(h, ul);
+      return sec;
+    };
+
+    const render = () => {
+      const focusedId = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>('.item-wrap')?.dataset.id;
+      const open = items.filter((i) => !i.checked);
+      const basket = items.filter((i) => i.checked);
+      $('[data-count]').textContent = open.length > 0 ? `あと ${open.length} 品` : '';
+      const nodes: Node[] = [];
+      for (const s of SECTIONS) {
+        const g = open.filter((i) => i.section === s);
+        if (g.length) nodes.push(group(s, g, false));
+      }
+      if (open.length === 0) nodes.push(el('p', 'empty', basket.length ? '全部買いました' : '買う物はありません'));
+      if (basket.length) {
+        const d = el('details', 'group basket');
+        d.open = basketOpen;
+        d.addEventListener('toggle', () => (basketOpen = d.open));
+        const sum = el('summary', 'basket-head');
+        const h = el('h4', 'sec', '購入済み ');
+        h.append(el('span', 'badge', String(basket.length)));
+        sum.append(h);
+        const clear = el('button', 'basket-clear', 'まとめて消す');
+        clear.type = 'button';
+        clear.addEventListener('click', () => removeWithUndo(basket, `${basket.length}品をリストから消しました`));
+        d.append(sum, clear);
+        for (const s of SECTIONS) {
+          const g = basket.filter((i) => i.section === s);
+          if (g.length) d.append(group(s, g, true));
+        }
+        nodes.push(d);
+      }
+      list.replaceChildren(...nodes);
+      drawnIds = new Set(items.map((i) => i.id));
+      drawnGroups = new Set(SECTIONS.filter((sec) => open.some((i) => i.section === sec)));
+      if (focusedId) list.querySelector<HTMLElement>(`.item-wrap[data-id="${focusedId}"] .check`)?.focus({ preventScroll: true });
+    };
+
+    // チェックした行は丸が緑になってから縮んで消え、購入済みへ移る（本物と同じ320ms）
+    const toggle = (item: Item) => {
+      if (item.checked) {
+        item.checked = false;
+        render();
+        return;
+      }
+      const checks = [...list.querySelectorAll<HTMLButtonElement>('.group:not(.basket) .check')];
+      const at = checks.findIndex((b) => b.closest<HTMLElement>('li')?.dataset.id === String(item.id));
+      const nextBtn = checks[at + 1] ?? checks[at - 1] ?? null;
+      const hadFocus = document.activeElement === checks[at];
+      const nextId = nextBtn?.closest<HTMLElement>('li')?.dataset.id;
+      // 今ある行に印を付けるだけにして、丸のチェックと行の縮みを動かす
+      leaving.add(item.id);
+      const li = list.querySelector<HTMLElement>(`.item-wrap[data-id="${item.id}"]`);
+      li?.classList.add('leaving');
+      li?.querySelector('.item')?.classList.add('checked');
+      const btn = li?.querySelector<HTMLButtonElement>('.check');
+      if (btn) {
+        btn.setAttribute('aria-checked', 'true');
+        btn.disabled = true;
+      }
+      window.setTimeout(() => {
+        item.checked = true;
+        leaving.delete(item.id);
+        render();
+        if (hadFocus) (nextId ? list.querySelector<HTMLElement>(`.item-wrap[data-id="${nextId}"] .check`) : nameInput)?.focus({ preventScroll: true });
+      }, 320);
+    };
+
+    const removeWithUndo = (target: Item[], message: string) => {
+      if (target.length === 0) return;
+      items = items.filter((i) => !target.includes(i));
+      render();
+      toast(message, {
+        label: '取り消す',
+        run: () => {
+          // 消した後に足した品は残したまま、消した品を元の並び（足した順）へ戻す
+          items = [...items, ...target.filter((t) => !items.includes(t))].sort((a, b) => a.id - b.id);
+          render();
+        },
+      });
+    };
+
+    // 同じ物を足そうとしたら、その行を黄色く光らせる（色は 0.6 秒かけて戻る）
+    const highlight = (id: number) => {
+      flash = id;
+      const rowOf = () => list.querySelector<HTMLElement>(`.item-wrap[data-id="${id}"] .item`);
+      rowOf()?.classList.add('flash');
+      rowOf()?.closest('.item-wrap')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      window.setTimeout(() => {
+        if (flash !== id) return;
+        flash = null;
+        rowOf()?.classList.remove('flash');
+      }, 1600);
+    };
+
+    // 「消す」を出す行を替える。描き直さずに動かすので、行は 0.25 秒かけて滑る
+    const setSwiped = (id: number | null) => {
+      for (const target of [swiped, id]) {
+        if (target === null) continue;
+        const li = list.querySelector<HTMLElement>(`.item-wrap[data-id="${target}"]`);
+        if (!li) continue;
+        const on = target === id;
+        li.querySelector<HTMLElement>('.item')!.style.transform = on ? 'translateX(-72px)' : '';
+        li.querySelector('.swipe-actions')!.setAttribute('aria-hidden', String(!on));
+        li.querySelector<HTMLButtonElement>('.swipe-delete')!.tabIndex = on ? 0 : -1;
+        li.querySelector('.item-body')!.setAttribute('aria-expanded', String(on));
+      }
+      swiped = id;
+    };
+
+    // 左になぞると、行の下に隠れた「消す」が出る
+    function bindSwipe(rowEl: HTMLElement, item: Item) {
+      let start: { id: number; x: number; y: number; base: number; horizontal: boolean } | null = null;
+      // なぞり終わりや、開いた行を押して閉じたときの click は、チェックや品名に渡さない
+      let eatUntil = 0;
+      rowEl.addEventListener(
+        'click',
+        (c) => {
+          if (performance.now() > eatUntil) return;
+          eatUntil = 0;
+          c.preventDefault();
+          c.stopPropagation();
+        },
+        { capture: true },
+      );
+      rowEl.addEventListener('pointerdown', (e) => {
+        start = { id: e.pointerId, x: e.clientX, y: e.clientY, base: swiped === item.id ? -72 : 0, horizontal: false };
+      });
+      rowEl.addEventListener('pointermove', (e) => {
+        if (!start || start.id !== e.pointerId) return;
+        const dx = e.clientX - start.x;
+        if (!start.horizontal) {
+          if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - start.y)) return;
+          start.horizontal = true;
+          rowEl.setPointerCapture(e.pointerId);
+          rowEl.classList.add('dragging');
+        }
+        rowEl.style.transform = `translateX(${Math.min(0, Math.max(-96, start.base + dx))}px)`;
+      });
+      const end = (e: PointerEvent) => {
+        if (!start || start.id !== e.pointerId) return;
+        const st = start;
+        start = null;
+        rowEl.classList.remove('dragging');
+        if (!st.horizontal) {
+          if (swiped === item.id && e.type === 'pointerup') {
+            eatUntil = performance.now() + 500;
+            setSwiped(null);
+          }
+          return;
+        }
+        eatUntil = performance.now() + 500;
+        const open = st.base + (e.clientX - st.x) < -36;
+        if (!open) rowEl.style.transform = '';
+        setSwiped(open ? item.id : swiped === item.id ? null : swiped);
+      };
+      rowEl.addEventListener('pointerup', end);
+      rowEl.addEventListener('pointercancel', end);
+    }
+
+    // 足す欄。打つとお店（当てた結果）と数量・メモの欄が出て、お店は一覧から選び直せる
+    const section = () => {
+      const c = cleanName(nameInput.value);
+      return picked ?? (c ? guessSection(c) : 'その他');
+    };
+
+    const renderChips = () => {
+      const typed = nameKey(nameInput.value);
+      const openKeys = new Set(items.filter((i) => !i.checked).map((i) => nameKey(i.name)));
+      const chips = HISTORY.filter((h) => !openKeys.has(nameKey(h.name)) && (!typed || nameKey(h.name).includes(typed)));
+      chipsBox.hidden = !focused || chips.length === 0;
+      chipsBox.replaceChildren(
+        ...chips.map((h) => {
+          const b = el('button', 'chip', `＋ ${h.name}`);
+          b.type = 'button';
+          b.addEventListener('pointerdown', (e) => e.preventDefault());
+          b.addEventListener('click', () => {
+            const added: Item = { id: nextId++, name: h.name, note: '', section: h.section, by: ME, checked: false };
+            items.push(added);
+            nameInput.value = '';
+            picked = null;
+            renderAdder();
+            render();
+            toast(`「${h.name}」を足しました`, {
+              label: '取り消す',
+              run: () => {
+                items = items.filter((i) => i !== added);
+                render();
+                renderAdder();
+              },
+            });
+            nameInput.focus();
+          });
+          return b;
+        }),
+      );
+    };
+
+    const renderAdder = () => {
+      const c = cleanName(nameInput.value);
+      addBtn.disabled = !c;
+      extra.hidden = !c;
+      $('[data-section-name]').textContent = section();
+      sectionBtn.setAttribute('aria-label', `お店: ${section()}`);
+      const showPicker = picking && focused && !!c;
+      picker.hidden = !showPicker;
+      sectionBtn.setAttribute('aria-expanded', String(showPicker));
+      $('[data-caret]').setAttribute('d', showPicker ? 'M7 14l5-5 5 5' : 'M7 10l5 5 5-5');
+      $('[data-picker-chips]').replaceChildren(
+        ...SECTIONS.map((s) => {
+          const b = el('button', 'chip', s);
+          b.type = 'button';
+          b.setAttribute('aria-pressed', String(s === section()));
+          b.addEventListener('pointerdown', (e) => e.preventDefault());
+          b.addEventListener('click', () => {
+            picked = s;
+            renderAdder();
+          });
+          return b;
+        }),
+      );
+      renderChips();
+    };
+
+    nameInput.addEventListener('input', () => {
+      if (!nameInput.value) {
+        picked = null;
+        picking = false;
+      }
+      renderAdder();
     });
+    sectionBtn.addEventListener('pointerdown', (e) => e.preventDefault());
+    sectionBtn.addEventListener('click', () => {
+      picking = !picking;
+      renderAdder();
+    });
+    adder.addEventListener('focusin', () => {
+      if (focused) return;
+      focused = true;
+      renderAdder();
+    });
+    adder.addEventListener('focusout', (e) => {
+      if (adder.contains(e.relatedTarget as Node)) return;
+      focused = false;
+      picking = false;
+      renderAdder();
+    });
+    adder.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') (document.activeElement as HTMLElement | null)?.blur();
+    });
+    adder.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const c = cleanName(nameInput.value);
+      if (!c) return;
+      const dup = items.find((i) => !i.checked && nameKey(i.name) === nameKey(c));
+      if (dup) {
+        highlight(dup.id);
+        toast(`「${dup.name}」はもう入っています`);
+      } else {
+        items.push({ id: nextId++, name: c, note: noteInput.value.normalize('NFKC').trim().slice(0, 100), section: section(), by: ME, checked: false });
+        render();
+      }
+      nameInput.value = '';
+      noteInput.value = '';
+      picked = null;
+      picking = false;
+      renderAdder();
+      nameInput.focus();
+    });
+
+    render();
+    renderAdder();
   });
 </script>

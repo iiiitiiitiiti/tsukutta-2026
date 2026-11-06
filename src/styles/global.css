@@ -100,7 +100,50 @@ p + p {
   letter-spacing: 0.04em;
 }
 
+/* 題は区切った塊の間でだけ折り返す */
+.hero__title span {
+  display: inline-block;
+}
+
+.hero__top {
+  display: grid;
+  grid-template-areas: 'head' 'chart' 'body';
+  gap: 48px;
+}
+
+.hero__head {
+  grid-area: head;
+}
+
+.hero__chart {
+  grid-area: chart;
+}
+
+/* PC では左に年・題・序文、右に積み上がるグラフを置く。グラフの足もとと序文の終わりをそろえる */
+@media (min-width: 900px) {
+  .hero__top {
+    grid-template-areas: 'head chart' 'body chart';
+    grid-template-columns: 1fr 1.3fr;
+    grid-template-rows: auto 1fr;
+    gap: 40px 64px;
+    text-align: left;
+  }
+
+  .hero__head .hero__title {
+    margin-bottom: 0;
+  }
+
+  .hero__chart {
+    align-self: end;
+  }
+
+  .hero__body {
+    align-self: end;
+  }
+}
+
 .hero__body {
+  grid-area: body;
   color: var(--ink-soft);
 }
 
