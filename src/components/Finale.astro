@@ -1,5 +1,6 @@
 ---
-// 締めのエンドロール。画面に入ると、作った物を作った順に流し、最後に作った人の名前と作った数で止まる。
+// 締めのエンドロール。映画の終わりと同じく、黒い画面いっぱいに題の札を出し、作った物を作った順に一定の速さで流す。
+// 最後の「2026 / 18こ作った」の札だけが真ん中で止まり、その上の行はそのまま上へ抜けていく。
 // 自動で動く文なので、止める・もう一度流すボタンを付ける（5秒を超えて動くものは止められるようにする）
 interface Tool {
   name: string;
@@ -20,7 +21,7 @@ const credits = [
 <section class="roll" aria-labelledby="roll-head" data-endroll>
   <div class="roll__frame" data-roll-frame>
     <div class="roll__list" data-roll-list>
-      <h2 class="roll__head" id="roll-head">今年つくったもの</h2>
+      <h2 class="roll__head" id="roll-head" data-roll-head>今年つくったもの</h2>
       <dl class="roll__rows">
         {tools.map((t) => (
           <div class="roll__row">
@@ -37,11 +38,11 @@ const credits = [
           </div>
         ))}
       </dl>
-      <div class="roll__end" data-roll-end>
-        <p class="roll__year">2026</p>
-        <p class="roll__total"><span class="roll__num">{tools.length}</span><span class="roll__unit">こ作った</span></p>
-        <p class="roll__fin">おわり</p>
-      </div>
+    </div>
+    <div class="roll__end" data-roll-end>
+      <p class="roll__year">2026</p>
+      <p class="roll__total"><span class="roll__num">{tools.length}</span><span class="roll__unit">こ作った</span></p>
+      <p class="roll__fin" data-roll-fin>おわり</p>
     </div>
   </div>
   <button type="button" class="roll__ctl" data-roll-ctl hidden>止める</button>
@@ -50,34 +51,41 @@ const credits = [
 <style>
   .roll {
     position: relative;
-    background: var(--ink);
+    background: #000;
     color: #fff;
+    /* 近くまでスクロールしたら、黒い画面がブラウザにぴったり収まる所で止める。
+       ページ全体の scroll-padding-top（上の月の帯の分）をここでは打ち消す。月の帯はこの手前で消えるため */
+    scroll-snap-align: start;
+    scroll-margin-top: -72px;
   }
 
   .roll__frame {
     position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 96px;
     padding: 96px 20px;
   }
 
   .roll__list {
     display: grid;
     justify-items: center;
-    gap: 72px;
+    gap: 80px;
     width: min(100%, 720px);
-    margin: 0 auto;
   }
 
   .roll__head {
     margin: 0;
-    font-size: clamp(22px, 4vw, 30px);
+    font-size: clamp(24px, 4.4vw, 36px);
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.24em;
+    text-indent: 0.24em;
   }
 
   /* 映画の終わりの字幕と同じく、中央の溝をはさんで左に役割（日付）、右に名前 */
   .roll__rows {
     display: grid;
-    gap: 18px;
+    gap: 14px;
     width: 100%;
     margin: 0;
   }
@@ -85,52 +93,59 @@ const credits = [
   .roll__row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0 28px;
+    gap: 0 32px;
     align-items: baseline;
   }
 
   .roll__date,
   .roll__role {
+    color: #a3a3a3;
     text-align: right;
   }
 
   .roll__date {
     font-family: var(--num);
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 500;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.08em;
   }
 
   .roll__role {
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
   }
 
   .roll__name {
     margin: 0;
-    font-size: clamp(16px, 2.6vw, 20px);
-    font-weight: 700;
+    font-size: clamp(15px, 2.4vw, 19px);
+    font-weight: 500;
     line-height: 1.5;
+    letter-spacing: 0.04em;
+  }
+
+  .roll__rows--credit {
+    gap: 28px;
   }
 
   .roll__rows--credit .roll__name {
     font-size: clamp(18px, 3vw, 24px);
+    font-weight: 700;
   }
 
   .roll__end {
     display: grid;
     justify-items: center;
     gap: 8px;
-    padding-top: 48px;
     text-align: center;
   }
 
   .roll__year {
     font-family: var(--num);
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 500;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.4em;
+    text-indent: 0.4em;
     line-height: 1;
   }
 
@@ -154,26 +169,44 @@ const credits = [
 
   .roll__fin {
     margin-top: 32px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
-    letter-spacing: 0.5em;
+    letter-spacing: 0.6em;
+    text-indent: 0.6em;
   }
 
-  /* スクリプトが動くときだけ、枠を画面の高さに固定して中で流す。上下の端は帯の色へ溶かす */
+  /* スクリプトが動くときだけ、枠をブラウザの高さいっぱいにして中で流す。映画と同じく上下の端で切る */
   :global(.js) .roll__frame {
-    height: min(100svh, 900px);
-    padding: 0 20px;
+    display: block;
+    height: 100svh;
+    padding: 0;
     overflow: hidden;
-    mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
   }
 
-  :global(.js) .roll__list {
+  :global(.js) .roll__list,
+  :global(.js) .roll__end {
     position: absolute;
     top: 0;
     right: 20px;
     left: 20px;
-    translate: 0 var(--y, 100%);
+    margin: 0 auto;
     will-change: translate;
+  }
+
+  /* 流し始めるまでは何も見せない。最初の位置はスクリプトが入れる */
+  :global(.js) .roll__head,
+  :global(.js) .roll__fin {
+    opacity: 0;
+  }
+
+  :global(.js) .roll__list {
+    width: auto;
+    max-width: 720px;
+    translate: 0 100svh;
+  }
+
+  :global(.js) .roll__end {
+    translate: 0 200svh;
   }
 
   .roll__ctl {
@@ -185,7 +218,7 @@ const credits = [
     padding: 0 18px;
     border: 2px solid #fff;
     border-radius: 999px;
-    background: var(--ink);
+    background: #000;
     color: #fff;
     font: inherit;
     font-size: 14px;
@@ -196,7 +229,7 @@ const credits = [
 
   .roll__ctl:hover {
     background: #fff;
-    color: var(--ink);
+    color: #000;
   }
 
   .roll__ctl:focus-visible {
@@ -205,64 +238,113 @@ const credits = [
 </style>
 
 <script>
-  // 1秒に流す長さ。映画の字幕くらいの速さ
-  const SPEED = 80;
+  // 1秒に流す長さ。映画の字幕と同じく、最初から最後まで同じ速さで流す
+  const SPEED = 90;
+  // 題の札が浮かび上がる時間と、流れ出すまで止まって見せる時間
+  const FADE = 700;
+  const HOLD = 1300;
 
   for (const roll of document.querySelectorAll<HTMLElement>('[data-endroll]')) {
     const frame = roll.querySelector<HTMLElement>('[data-roll-frame]')!;
     const list = roll.querySelector<HTMLElement>('[data-roll-list]')!;
+    const head = roll.querySelector<HTMLElement>('[data-roll-head]')!;
     const end = roll.querySelector<HTMLElement>('[data-roll-end]')!;
+    const fin = roll.querySelector<HTMLElement>('[data-roll-fin]')!;
     const ctl = roll.querySelector<HTMLButtonElement>('[data-roll-ctl]')!;
-    let run: Animation | null = null;
+    let runs: Animation[] = [];
+    let played = false;
 
-    // 止まる所は「おわり」の塊が枠の真ん中に来る位置
-    const stopAt = () => frame.clientHeight / 2 - (end.offsetTop + end.offsetHeight / 2);
-    // 流し始めの位置。見出しが枠の下のほうに見えている所から始め、待ち時間を作らない
-    const startAt = () => frame.clientHeight * 0.72;
-    list.style.translate = `0 ${startAt()}px`;
-
-    const play = () => {
-      run?.cancel();
-      const start = startAt();
-      const stop = stopAt();
-      run = list.animate([{ translate: `0 ${start}px` }, { translate: `0 ${stop}px` }], {
-        duration: ((start - stop) / SPEED) * 1000,
-        easing: 'cubic-bezier(0.2, 0.25, 0.2, 1)',
-        fill: 'forwards',
-      });
-      ctl.hidden = false;
-      ctl.textContent = '止める';
-      run.onfinish = () => (ctl.textContent = 'もう一度流す');
+    // 位置はすべて枠の上端からの距離（px）
+    const measure = () => {
+      const h = frame.clientHeight;
+      // 題の札は枠の真ん中から始め、その下の行は枠の下の端のすぐ外に置く
+      head.style.marginBottom = '0px';
+      const gap = parseFloat(getComputedStyle(list).rowGap);
+      head.style.marginBottom = `${Math.max(0, h / 2 - head.offsetHeight / 2 - gap)}px`;
+      const listStart = h / 2 - head.offsetHeight / 2;
+      const listOut = -list.offsetHeight;
+      // 締めの札は最後の行の少し後ろを付いてきて、真ん中に来たら止まる
+      const endStart = listStart + list.offsetHeight + h * 0.25;
+      const endStop = h / 2 - end.offsetHeight / 2;
+      return { listStart, listOut, endStart, endStop };
     };
 
-    // 流し終えた後に画面の高さが変わったら、「おわり」の塊を枠の真ん中に置き直す
-    window.addEventListener('resize', () => {
-      if (!run) list.style.translate = `0 ${startAt()}px`;
-      if (run?.playState !== 'finished') return;
-      run.cancel();
-      run = list.animate([{ translate: `0 ${stopAt()}px` }], { duration: 0, fill: 'forwards' });
-      run.onfinish = null;
-    });
+    const pose = (listY: number, endY: number, shown: boolean) => {
+      list.style.translate = `0 ${listY}px`;
+      end.style.translate = `0 ${endY}px`;
+      head.style.opacity = fin.style.opacity = shown ? '1' : '0';
+    };
+
+    const finished = () => runs.length > 0 && runs.every((a) => a.playState === 'finished');
+
+    const play = () => {
+      runs.forEach((a) => a.cancel());
+      const { listStart, listOut, endStart, endStop } = measure();
+      pose(listStart, endStart, false);
+      const listTime = ((listStart - listOut) / SPEED) * 1000;
+      const endTime = ((endStart - endStop) / SPEED) * 1000;
+      const total = Math.max(listTime, endTime);
+      const lead = FADE + HOLD;
+      const opts = { delay: lead, duration: total, fill: 'forwards' } as const;
+      runs = [
+        head.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FADE, fill: 'forwards' }),
+        list.animate([{ translate: `0 ${listStart}px` }, { translate: `0 ${listStart - (SPEED * total) / 1000}px` }], opts),
+        // 締めの札は行と同じ速さで上がり、真ん中に来たらそこで止まる。行のほうは止まらずに上へ抜ける
+        end.animate(
+          [
+            { translate: `0 ${endStart}px` },
+            { translate: `0 ${endStop}px`, offset: endTime / total },
+            { translate: `0 ${endStop}px` },
+          ],
+          opts,
+        ),
+        fin.animate([{ opacity: 0 }, { opacity: 1 }], { delay: lead + endTime + 600, duration: 900, fill: 'forwards' }),
+      ];
+      ctl.hidden = false;
+      ctl.textContent = '止める';
+      Promise.all(runs.map((a) => a.finished))
+        .then(() => (ctl.textContent = 'もう一度流す'))
+        .catch(() => {});
+    };
+
+    // 画面の高さが変わったら置き直す。流し終えた後なら、締めの札を枠の真ん中に置き直す
+    const relayout = () => {
+      if (!played) {
+        const { listStart, endStart } = measure();
+        return pose(listStart, endStart, false);
+      }
+      if (runs.length > 0 && !finished()) return;
+      runs.forEach((a) => a.cancel());
+      runs = [];
+      const { listOut, endStop } = measure();
+      pose(listOut, endStop, true);
+      ctl.textContent = 'もう一度流す';
+    };
+    relayout();
+    window.addEventListener('resize', relayout);
 
     ctl.addEventListener('click', () => {
-      if (!run || run.playState === 'finished') return play();
-      if (run.playState === 'paused') {
-        run.play();
+      if (runs.length === 0 || finished()) return play();
+      // 終わった動き（題のフェードなど）に play() をかけると頭から再生し直すので、終わっていないものだけを止め・動かす
+      const live = runs.filter((a) => a.playState !== 'finished');
+      if (live.some((a) => a.playState === 'paused')) {
+        live.forEach((a) => a.play());
         ctl.textContent = '止める';
       } else {
-        run.pause();
+        live.forEach((a) => a.pause());
         ctl.textContent = '続きを流す';
       }
     });
 
-    // 枠が少しでも見えたら流し始める。一度流したら、あとはボタンで流し直す
+    // 枠がほぼ画面に入ったら流し始める。題の札を見落とさないよう、半分以上見えてから。一度流したら、あとはボタンで流し直す
     const io = new IntersectionObserver(
       ([e]) => {
         if (!e.isIntersecting) return;
         io.disconnect();
+        played = true;
         play();
       },
-      { threshold: 0.15 },
+      { threshold: 0.6 },
     );
     io.observe(frame);
   }

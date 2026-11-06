@@ -1,10 +1,9 @@
 ---
-// 上に固定する月の色帯。読んでいる月の帯が太くなり、作ったものが無い月は灰色で残す。月の名前の横にその月に作った数を出す
+// 上に固定する月の色帯。読んでいる月の帯が太くなり、作ったものが無い月は灰色で残す
 interface Props {
   months: number[];
-  counts: Record<number, number>;
 }
-const { months, counts } = Astro.props;
+const { months } = Astro.props;
 const all = [4, 5, 6, 7, 8, 9, 10, 11];
 ---
 <nav class="bar" aria-label="月ごとに移動">
@@ -14,7 +13,7 @@ const all = [4, 5, 6, 7, 8, 9, 10, 11];
         <li class="bar__item" data-month={m}>
           <a class="bar__link" href={`#m${m}`} data-bar={m}>
             <span class="bar__seg"></span>
-            <span class="bar__label">{m}月<span class="bar__count">{counts[m]}<span class="sr-only">件</span></span></span>
+            <span class="bar__label">{m}月</span>
           </a>
         </li>
       ) : (
@@ -59,12 +58,16 @@ const all = [4, 5, 6, 7, 8, 9, 10, 11];
     text-decoration: none;
   }
 
+  /* 太くなる分の高さを先に取っておき、見た目だけ縮める。高さそのものを変えると、
+     月が切り替わる途中で古い帯と新しい帯がどちらも細くなり、白い帯の高さが揺れる */
   .bar__seg {
     display: block;
-    height: 6px;
+    height: 12px;
     background: var(--c);
     opacity: 0.7;
-    transition: height 300ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms;
+    scale: 1 0.5;
+    transform-origin: top;
+    transition: scale 300ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 300ms;
   }
 
   .is-empty .bar__seg {
@@ -81,12 +84,6 @@ const all = [4, 5, 6, 7, 8, 9, 10, 11];
     transition: color 300ms;
   }
 
-  .bar__count {
-    margin-left: 4px;
-    color: var(--ink-soft);
-    font-weight: 400;
-  }
-
   .is-empty .bar__label {
     color: #6b7280;
   }
@@ -96,7 +93,7 @@ const all = [4, 5, 6, 7, 8, 9, 10, 11];
   }
 
   .bar__link[aria-current='true'] .bar__seg {
-    height: 12px;
+    scale: 1;
     opacity: 1;
   }
 

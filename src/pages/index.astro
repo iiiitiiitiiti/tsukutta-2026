@@ -11,6 +11,8 @@ import Shot from '../components/Shot.astro';
 import HeroShelf from '../components/HeroShelf.astro';
 import Finale from '../components/Finale.astro';
 import AdventNav from '../components/AdventNav.astro';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 type Extra = { id: string; match: string; icon?: string; lead?: string; counter?: { value: string; unit: string }; demo?: string; noShot?: boolean };
 type Entry = { date: string; month: number; day: number; title: string; paragraphs: string[]; hasImage: boolean; tools: string[] };
@@ -37,6 +39,7 @@ const anchorOf = (e: Entry) => `i-${e.tools[0]}`;
 const shelf = monthSections.flatMap((s) => s.entries.flatMap((e) => e.tools.map((id) => ({ id, name: extras.get(id)!.match, icon: extras.get(id)!.icon, month: e.month, day: e.day, anchor: anchorOf(e) }))));
 // 題は「〜を」の後ろで2行に分ける。原稿の題に「を」が無ければそのまま1つの塊で出す
 const titleParts = timeline.title.includes('を') ? [timeline.title.slice(0, timeline.title.indexOf('を') + 1), timeline.title.slice(timeline.title.indexOf('を') + 1)] : [timeline.title];
+const arrowUp = readFileSync(resolve(process.cwd(), 'node_modules/lucide-static/icons/arrow-up.svg'), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
 const description = `Webデザイナーが今年AIに頼んで作ったアプリやページ${total}件を、作った日の順に並べた年表。`;
 ---
 <!doctype html>
@@ -52,8 +55,10 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     <meta name="theme-color" content="#ffffff" />
     <script is:inline>document.documentElement.classList.add('js');</script>
   </head>
-  <body>
-    <MonthBar months={months} counts={counts} />
+  <body id="top">
+    {/* 上の月の帯はこの囲みの中だけで付いてくる。締めのエンドロールに入る手前で止まる */}
+    <div class="page">
+    <MonthBar months={months} />
 
     <header class="hero">
       <div class="hero__top">
@@ -96,9 +101,12 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
         <div class="note__body">{s.paragraphs.map((p) => <p>{p}</p>)}</div>
       </section>
     ))}
+    </div>
     <Finale tools={shelf} />
     <AdventNav />
-    <footer class="foot"><span class="foot__end" aria-hidden="true"></span></footer>
+    <footer class="foot">
+      <a class="foot__top" href="#top"><span class="foot__icon" aria-hidden="true" set:html={arrowUp} />上に戻る</a>
+    </footer>
   </body>
 </html>
 
@@ -205,6 +213,40 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
   }
 
   .foot {
-    padding: 24px 0 96px;
+    display: grid;
+    justify-items: center;
+    padding: 40px 20px 96px;
+    scroll-snap-align: end;
+  }
+
+  .foot__top {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 0 24px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 150ms, color 150ms;
+  }
+
+  .foot__top:hover {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  .foot__icon {
+    display: grid;
+    width: 18px;
+  }
+
+  .foot__icon :global(svg) {
+    width: 100%;
+    height: auto;
+    stroke-width: 2.25;
   }
 </style>

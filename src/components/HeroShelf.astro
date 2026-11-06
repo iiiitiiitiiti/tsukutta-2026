@@ -57,6 +57,7 @@ const svgOf = (icon?: string) => {
   .chart {
     --size: 34px;
     --gap: 4px;
+    --lift: 10px;
     position: relative;
     width: 100%;
   }
@@ -77,16 +78,17 @@ const svgOf = (icon?: string) => {
     gap: 10px;
   }
 
-  /* 下から積む。いちばん多い月の高さで全部の列をそろえる */
+  /* 下から積む。いちばん多い月の高さで全部の列をそろえる。
+     一番下のアイコンは線から --lift だけ浮かせ、指したときの輪も線に掛からないようにする */
   .chart__stack {
     display: flex;
     flex-direction: column-reverse;
     align-items: center;
     gap: var(--gap);
     width: 100%;
-    height: calc(var(--max) * var(--size) + (var(--max) - 1) * var(--gap));
+    height: calc(var(--max) * var(--size) + (var(--max) - 1) * var(--gap) + var(--lift) + 3px);
     margin: 0;
-    padding: 0;
+    padding: 0 0 var(--lift);
     border-bottom: 3px solid var(--ink);
     list-style: none;
   }
@@ -245,6 +247,7 @@ const svgOf = (icon?: string) => {
     .chart {
       --size: 60px;
       --gap: 6px;
+      --lift: 14px;
     }
 
     .chart__cols {
