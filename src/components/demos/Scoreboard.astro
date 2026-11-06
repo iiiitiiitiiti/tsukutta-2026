@@ -1,9 +1,9 @@
 ---
 // 得点板の小さな実物。本物の解答者カード（m○n× のルール）を3枚並べた縮小版。
 // 色・大きさ・角の丸み・札・ロック・得点順の並べ替え・WINNER 画面は本物の値を写した。
-// 本物から変えたのは、文字が背景との差4.5:1を割る所だけ（/3 の小さな数字・札・得点順の押した色）
+// 本物から変えたのは、文字が背景との差4.5:1を割る所（/5 の小さな数字・札・得点順の押した色）と、札の置き場所（カードの左上）
 const players = ['Aさん', 'Bさん', 'Cさん'];
-const M = 3;
+const M = 5;
 const N = 2;
 ---
 <div class="qs" data-qs data-m={M} data-n={N}>
@@ -21,6 +21,7 @@ const N = 2;
       <li class="qs__card" data-card data-index={i}>
         <span class="qs__locked" aria-hidden="true"><b>LOCKED</b></span>
         <div class="qs__icons">
+          <div class="qs__badges" data-badges></div>
           <button type="button" class="qs__icon" data-lock aria-label={`${name} をロック`} aria-pressed="false">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path data-shackle d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
           </button>
@@ -29,7 +30,6 @@ const N = 2;
           </button>
         </div>
         <p class="qs__name" data-name>{name}</p>
-        <div class="qs__badges" data-badges></div>
         <div class="qs__score" aria-hidden="true">
           <span class="qs__line"><span class="qs__mk qs__ok">○</span><span class="qs__num qs__ok" data-c>0</span><span class="qs__max qs__ok-dim">/{M}</span></span>
           <span class="qs__line"><span class="qs__mk qs__ng">✕</span><span class="qs__num qs__ng" data-w>0</span><span class="qs__max qs__ng-dim">/{N}</span></span>
@@ -123,9 +123,11 @@ const N = 2;
     transition: background-color 150ms, color 150ms;
   }
 
-  .qs__tool:hover {
-    background: var(--edge);
-    color: var(--qs-ink);
+  @media (hover: hover) {
+    .qs__tool:hover {
+      background: var(--edge);
+      color: var(--qs-ink);
+    }
   }
 
   .qs__tool svg {
@@ -255,14 +257,18 @@ const N = 2;
     height: 14px;
   }
 
-  .qs__icon:hover {
-    background: var(--edge);
-    color: var(--qs-ink);
+  @media (hover: hover) {
+    .qs__icon:hover {
+      background: var(--edge);
+      color: var(--qs-ink);
+    }
   }
 
-  .qs__icon--trophy:hover {
-    background: rgb(217 119 6 / 0.15);
-    color: #b45309;
+  @media (hover: hover) {
+    .qs__icon--trophy:hover {
+      background: rgb(217 119 6 / 0.15);
+      color: #b45309;
+    }
   }
 
   .qs__icon[aria-pressed='true'] {
@@ -278,11 +284,12 @@ const N = 2;
     text-align: center;
   }
 
+  /* 本物は名前の下に札の段を取るが、札が無い間はその段が○の上の空きに見える。
+     見本ではカードの左上（ロックと優勝の印の反対側）の空いている所に出す */
   .qs__badges {
     display: flex;
     align-items: center;
-    justify-content: center;
-    height: 24px;
+    margin-right: auto;
   }
 
   .qs__badges :global(span) {
@@ -393,8 +400,10 @@ const N = 2;
     color: var(--ok);
   }
 
-  .qs__btn--ok:hover:not(:disabled) {
-    background: rgb(5 150 105 / 0.3);
+  @media (hover: hover) {
+    .qs__btn--ok:hover:not(:disabled) {
+      background: rgb(5 150 105 / 0.3);
+    }
   }
 
   .qs__btn--ng {
@@ -403,8 +412,10 @@ const N = 2;
     color: var(--ng);
   }
 
-  .qs__btn--ng:hover:not(:disabled) {
-    background: rgb(239 68 68 / 0.3);
+  @media (hover: hover) {
+    .qs__btn--ng:hover:not(:disabled) {
+      background: rgb(239 68 68 / 0.3);
+    }
   }
 
   /* WINNER 画面。本物は画面いっぱいだが、ここでは得点板の枠の中に出す */
@@ -518,8 +529,10 @@ const N = 2;
     cursor: pointer;
   }
 
-  .qs__win-back:hover {
-    background: rgb(255 255 255 / 0.18);
+  @media (hover: hover) {
+    .qs__win-back:hover {
+      background: rgb(255 255 255 / 0.18);
+    }
   }
 
   .qs__win :focus-visible {

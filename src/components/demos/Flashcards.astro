@@ -265,7 +265,7 @@ const cards = [
     flex-direction: column;
     gap: 4px;
     padding: 28px 20px;
-    overflow-y: auto;
+    overflow: hidden;
     border: 1px solid var(--fc-border);
     border-radius: 16px;
     background: #fff;
@@ -789,6 +789,41 @@ const cards = [
     $('[data-finish]').addEventListener('click', () => {
       start(cards, true);
       reveal.focus();
+    });
+
+    // カードの中でスクロールさせない。5枚の裏面（問題と答え）でいちばん高いものが収まるよう、見本の高さを伸ばす。
+    // 幅で折り返しが変わるので、幅が変わるたびに測り直す。閉じた「くわしく読む」の中では正しく測れないので、見えているときだけ測る
+    let lastWidth = 0;
+    const fit = () => {
+      const width = scene.clientWidth;
+      if (!width || width === lastWidth || study.hidden || !root.checkVisibility()) return;
+      lastWidth = width;
+      root.style.height = '';
+      const probe = back.cloneNode(true) as HTMLElement;
+      // 本物の裏面と取り違えないよう、中身を差し替える目印だけ外す（見た目の指定に使う data-astro-* は残す）
+      for (const el of [probe, ...probe.querySelectorAll('*')]) {
+        for (const at of [...el.attributes]) if (at.name.startsWith('data-') && !at.name.startsWith('data-astro')) el.removeAttribute(at.name);
+      }
+      Object.assign(probe.style, { inset: '0 0 auto 0', height: 'auto', transform: 'none', visibility: 'hidden' });
+      scene.append(probe);
+      const [q, a, note] = [...probe.children].filter((el) => el.tagName !== 'HR') as HTMLElement[];
+      let need = 0;
+      for (const c of cards) {
+        q.textContent = c.q;
+        a.textContent = c.a;
+        note.textContent = c.note;
+        note.hidden = !c.note;
+        need = Math.max(need, probe.offsetHeight);
+      }
+      probe.remove();
+      const extra = need - scene.clientHeight;
+      if (extra > 0) root.style.height = `${root.offsetHeight + extra}px`;
+    };
+    new ResizeObserver(fit).observe(root);
+    root.closest('details')?.addEventListener('toggle', fit);
+    document.fonts?.ready.then(() => {
+      lastWidth = 0;
+      fit();
     });
 
     start(cards, true);

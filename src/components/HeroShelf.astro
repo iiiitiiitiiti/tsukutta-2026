@@ -56,10 +56,12 @@ const svgOf = (icon?: string) => {
 </nav>
 
 <style>
-  /* 丸の大きさは34pxまで。列が増えて（12月の列など）幅に収まらないときは、列の幅に合わせて小さくする */
+  /* 丸の大きさは34pxまで。列が増えて（12月の列など）幅に収まらないときは、列の幅に合わせて小さくする。
+     スマホでは最初の画面に月の数字と数まで収まるよう、画面の高さからグラフより上と下の分（約390px）を引いた高さにも合わせる。
+     押せる大きさを保つため24pxより小さくはしない */
   .chart {
     container-type: inline-size;
-    --size: min(34px, (100cqi - (var(--cols) - 1) * 4px) / var(--cols));
+    --size: max(24px, min(34px, (100cqi - (var(--cols) - 1) * 4px) / var(--cols), (100svh - 390px - (var(--max) - 1) * 4px - 13px) / var(--max)));
     --gap: 4px;
     --lift: 10px;
     position: relative;
@@ -104,9 +106,14 @@ const svgOf = (icon?: string) => {
   }
 
   /* 指したアイコンの枠が、上や隣のアイコンの下に隠れないよう一番上に出す */
-  .chart__slot:hover,
   .chart__slot:focus-within {
     z-index: 3;
+  }
+
+  @media (hover: hover) {
+    .chart__slot:hover {
+      z-index: 3;
+    }
   }
 
   .chart__link {
@@ -131,10 +138,16 @@ const svgOf = (icon?: string) => {
     stroke-width: 1.75;
   }
 
-  .chart__link:hover .chart__icon,
   .chart__link:focus-visible .chart__icon {
     scale: 1.15;
     box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--ink);
+  }
+
+  @media (hover: hover) {
+    .chart__link:hover .chart__icon {
+      scale: 1.15;
+      box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--ink);
+    }
   }
 
   /* 指した物の名前。グラフの左上は4〜8月の列が低くて空いているので、そこに出す */
@@ -212,10 +225,12 @@ const svgOf = (icon?: string) => {
     background: var(--empty);
   }
 
-  a.chart__month:hover .chart__num {
-    text-decoration: underline;
-    text-decoration-thickness: 3px;
-    text-underline-offset: 4px;
+  @media (hover: hover) {
+    a.chart__month:hover .chart__num {
+      text-decoration: underline;
+      text-decoration-thickness: 3px;
+      text-underline-offset: 4px;
+    }
   }
 
   @keyframes drop {
@@ -288,7 +303,8 @@ const svgOf = (icon?: string) => {
       cap.classList.add('is-on');
     };
     for (const a of chart.querySelectorAll('.chart__link')) {
-      a.addEventListener('pointerenter', () => show(a));
+      // 指で触れたときは出さない。スマホでは押すとすぐ年表へ移るので、名前が残るだけになる
+      a.addEventListener('pointerenter', (e) => (e as PointerEvent).pointerType === 'mouse' && show(a));
       a.addEventListener('pointerleave', () => show(chart.querySelector('.chart__link:focus-visible')));
       // マウスで押したときのフォーカスでは出さない。飛んだ後も名前が残ってしまうため
       a.addEventListener('focus', () => a.matches(':focus-visible') && show(a));

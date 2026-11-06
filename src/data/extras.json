@@ -16,5 +16,5 @@
   { "id": "ikimono-techo", "match": "いきもの手帳", "icon": "fish", "lead": "1種1ページ、出典つきの自分用の生き物図鑑", "counter": { "value": "369", "unit": "種" } },
   { "id": "tsukutta-tana", "match": "つくったもの棚", "icon": "library", "lead": "作ったものを種類ごとに並べたページ" },
   { "id": "visual-quiz-slides", "match": "ビジュアルクイズのスライド", "icon": "presentation", "lead": "画像や文字で見せるクイズを、大画面で出題するスライド集" },
-  { "id": "kaimono", "match": "かいもの", "icon": "shopping-cart", "lead": "ふたりで同じ買い物リストを見て、足して、チェックするアプリ", "demo": "kaimono" }
+  { "id": "kaimono", "match": "かいもの", "icon": "shopping-cart", "lead": "複数人で同じ買い物リストを見て、足して、チェックするアプリ", "demo": "kaimono" }
 ]

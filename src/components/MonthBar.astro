@@ -36,8 +36,15 @@ const all = Array.from({ length: last - 3 }, (_, i) => i + 4);
     top: 0;
     z-index: 20;
     padding: 10px 20px 6px;
-    background: rgb(255 255 255 / 0.92);
-    backdrop-filter: blur(8px);
+    background: rgb(255 255 255 / 0.97);
+  }
+
+  /* 後ろをぼかすのは PC だけ。スマホではスクロールのたびにぼかし直す負担が大きく、動きが引っかかる */
+  @media (min-width: 900px) {
+    .bar {
+      background: rgb(255 255 255 / 0.92);
+      backdrop-filter: blur(8px);
+    }
   }
 
   .bar__list {
@@ -90,8 +97,10 @@ const all = Array.from({ length: last - 3 }, (_, i) => i + 4);
     color: #6b7280;
   }
 
-  a.bar__link:hover .bar__seg {
-    opacity: 1;
+  @media (hover: hover) {
+    a.bar__link:hover .bar__seg {
+      opacity: 1;
+    }
   }
 
   .bar__link[aria-current='true'] .bar__seg {

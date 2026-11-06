@@ -136,9 +136,11 @@ const dayOf = (iso: string) => {
     transition: background-color 150ms, color 150ms;
   }
 
-  a.advent__card:hover {
-    background: var(--ink);
-    color: #fff;
+  @media (hover: hover) {
+    a.advent__card:hover {
+      background: var(--ink);
+      color: #fff;
+    }
   }
 
   div.advent__card {

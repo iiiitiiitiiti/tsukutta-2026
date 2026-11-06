@@ -102,21 +102,21 @@ p + p {
 .hero {
   width: min(100% - 40px, 1200px);
   margin: 0 auto;
-  padding: 88px 0 72px;
+  padding: 24px 0 72px;
   text-align: center;
 }
 
 .hero__year {
   margin: 0;
   font-family: var(--num);
-  font-size: clamp(96px, 22vw, 200px);
+  font-size: clamp(72px, 19vw, 200px);
   font-weight: 600;
   line-height: 0.9;
   letter-spacing: -0.01em;
 }
 
 .hero__title {
-  margin: 28px 0 28px;
+  margin: 12px 0;
   font-size: clamp(24px, 4.4vw, 34px);
   font-weight: 700;
   line-height: 1.5;
@@ -146,7 +146,7 @@ p + p {
 .hero__top {
   display: grid;
   grid-template-areas: 'head' 'chart' 'body';
-  gap: 48px;
+  gap: 24px 48px;
 }
 
 .hero__head {
@@ -166,6 +166,18 @@ p + p {
 
 /* PC では左に年・題・序文、右に積み上がるグラフを置く。グラフの足もとと序文の終わりをそろえる */
 @media (min-width: 900px) {
+  .hero {
+    padding-top: 88px;
+  }
+
+  .hero__year {
+    font-size: clamp(96px, 22vw, 200px);
+  }
+
+  .hero__title {
+    margin: 28px 0;
+  }
+
   .hero__top {
     grid-template-areas: 'head chart' 'body chart';
     grid-template-columns: 1fr 1.3fr;

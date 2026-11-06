@@ -89,7 +89,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
 
     <main class="tl">
       {monthSections.map((s, i) => (
-        <section class="tl-month" id={`m${s.month}`} data-month={s.month} aria-labelledby={`mh${s.month}`} style={`--c-next: ${monthSections[i + 1] ? `var(--b${monthSections[i + 1].month})` : 'var(--bg)'}`}>
+        <section class="tl-month" id={`m${s.month}`} data-month={s.month} data-single={s.entries.length === 1} aria-labelledby={`mh${s.month}`} style={`--c-next: ${monthSections[i + 1] ? `var(--b${monthSections[i + 1].month})` : 'var(--bg)'}`}>
           <div class="tl-month__inner">
             <h2 class="tl-month__head" id={`mh${s.month}`} data-reveal>
               <span class="tl-month__name"><span class="tl-month__num">{s.month}</span><span class="tl-month__unit">月</span></span>
@@ -134,8 +134,8 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
      中ほどで鮮やかさが抜けて濁る。oklch は鮮やかさを保ったまま色相を回すので、間に黄色などが挟まる */
   .tl-month {
     /* 色を変え始める所。月の見出しの箱（上の余白＋大きな数字＋添え書き）の下端より少し下に置く */
-    --hold: calc(88px + clamp(96px, 26vw, 200px) * 0.85 + 80px);
-    padding: 88px 0 40px;
+    --hold: calc(56px + clamp(96px, 26vw, 200px) * 0.85 + 72px);
+    padding: 56px 0 16px;
     background: var(--band) linear-gradient(var(--band) var(--hold), var(--c-next));
     background: var(--band) linear-gradient(in oklch, var(--band) var(--hold), var(--c-next));
     color: var(--on-c);
@@ -146,9 +146,10 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     background: var(--band) linear-gradient(in oklab, var(--band) var(--hold), var(--c-next));
   }
 
+  /* スマホは左右の余白と、線から項目までを詰めて、開いた中身の幅を広く取る */
   .tl-month__inner {
     position: relative;
-    width: min(100% - 40px, 1200px);
+    width: min(100% - 32px, 1200px);
     margin: 0 auto;
   }
 
@@ -158,7 +159,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 22px;
+    left: 14px;
     width: 2px;
     background: var(--on-c);
     opacity: 0.5;
@@ -171,7 +172,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     flex-direction: column;
     gap: 12px;
     width: fit-content;
-    margin: 0 0 40px;
+    margin: 0 0 32px;
     padding: 0 0 16px;
     background: var(--band);
     line-height: 0.85;
@@ -225,7 +226,11 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
   @media (min-width: 900px) {
     .tl-month {
       --hold: calc(104px + clamp(96px, 26vw, 200px) * 0.85 + 80px);
-      padding-top: 104px;
+      padding: 104px 0 40px;
+    }
+
+    .tl-month__inner {
+      width: min(100% - 40px, 1200px);
     }
 
     .tl-month__inner::before {
@@ -239,6 +244,54 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
       text-align: center;
     }
 
+    /* 項目が1つだけの月は、月の数字を上に置かず、項目の反対側の空いている所へ並べる */
+    /* 月の数字が上に無いぶん区画が短いので、色を移し始める所も早める */
+    .tl-month[data-single='true'] {
+      --hold: 50%;
+    }
+
+    .tl-month[data-single='true'] .tl-month__inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: start;
+    }
+
+    .tl-month[data-single='true'] .tl-month__head {
+      grid-row: 1;
+      margin: 0;
+      padding: 0;
+      background: none;
+    }
+
+    .tl-month[data-single='true'] :global(.item) {
+      grid-row: 1;
+      width: auto;
+      margin-left: 0;
+    }
+
+    .tl-month[data-single='true']:has(:global(.item[data-side='left'])) .tl-month__head {
+      grid-column: 2;
+      justify-self: start;
+      align-items: flex-start;
+      padding-left: 56px;
+      text-align: left;
+    }
+
+    .tl-month[data-single='true']:has(:global(.item[data-side='right'])) .tl-month__head {
+      grid-column: 1;
+      justify-self: end;
+      align-items: flex-end;
+      padding-right: 56px;
+      text-align: right;
+    }
+
+    .tl-month[data-single='true'] :global(.item[data-side='left']) {
+      grid-column: 1;
+    }
+
+    .tl-month[data-single='true'] :global(.item[data-side='right']) {
+      grid-column: 2;
+    }
   }
 
   /* 年表の終わり。最後の月の線の続きを点線で下へ伸ばし、薄れて消える。
@@ -250,7 +303,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
 
   .tl-next__inner {
     position: relative;
-    width: min(100% - 40px, 1200px);
+    width: min(100% - 32px, 1200px);
     margin: 0 auto;
     padding: 96px 0 160px;
   }
@@ -260,7 +313,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 22px;
+    left: 14px;
     width: 2px;
     background: repeating-linear-gradient(to bottom, var(--ink) 0 6px, transparent 6px 14px);
     opacity: 0.5;
@@ -322,6 +375,10 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
   }
 
   @media (min-width: 900px) {
+    .tl-next__inner {
+      width: min(100% - 40px, 1200px);
+    }
+
     .tl-next__inner::before {
       left: calc(50% - 1px);
     }
@@ -356,9 +413,11 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     transition: background-color 150ms, color 150ms;
   }
 
-  .foot__top:hover {
-    background: var(--ink);
-    color: #fff;
+  @media (hover: hover) {
+    .foot__top:hover {
+      background: var(--ink);
+      color: #fff;
+    }
   }
 
   .foot__icon {

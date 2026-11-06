@@ -279,8 +279,10 @@ const items = [
     transition: stroke-dashoffset 0.25s var(--ease-out) 0.05s;
   }
 
-  .km__list :global(.check:hover circle) {
-    stroke: var(--accent);
+  @media (hover: hover) {
+    .km__list :global(.check:hover circle) {
+      stroke: var(--accent);
+    }
   }
 
   .km__list :global(.item.checked .check circle) {
@@ -399,8 +401,10 @@ const items = [
     cursor: pointer;
   }
 
-  .km__list :global(.basket-clear:hover) {
-    color: var(--danger);
+  @media (hover: hover) {
+    .km__list :global(.basket-clear:hover) {
+      color: var(--danger);
+    }
   }
 
   /* 購入済みの数の札。本物の薄い灰の地に灰の文字（差4.23）を、少し濃い灰にした */

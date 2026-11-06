@@ -105,14 +105,14 @@ const pair = (item: string) => {
 <style>
   .item {
     position: relative;
-    padding: 0 0 56px 56px;
+    padding: 0 0 48px 40px;
   }
 
   /* 線の上の丸。墨の輪に白い中身。帯の色は下へ行くほど次の月の色に移るので、中身を帯の色にはしない */
   .item__node {
     position: absolute;
     top: 30px;
-    left: 14px;
+    left: 6px;
     width: 20px;
     height: 20px;
     border: 4px solid var(--on-c);
@@ -129,8 +129,8 @@ const pair = (item: string) => {
     content: '';
     position: absolute;
     top: 39px;
-    left: 34px;
-    width: 18px;
+    left: 26px;
+    width: 12px;
     border-top: 2px dotted var(--on-c);
     opacity: 0.6;
     transform-origin: left;
@@ -261,10 +261,15 @@ const pair = (item: string) => {
 
   /* 開いた印（文言・矢印・下線）は、押した瞬間に切り替える。details の open は閉じる動きが終わるまで残るので、
      スクリプトが動くときは is-open で見る。動かないときは open で見る */
-  .item__summary:hover,
   .item__more.is-open .item__summary,
   :global(html:not(.js)) .item__more[open] .item__summary {
     text-decoration: underline;
+  }
+
+  @media (hover: hover) {
+    .item__summary:hover {
+      text-decoration: underline;
+    }
   }
 
   .item__summary:focus-visible {
@@ -294,9 +299,16 @@ const pair = (item: string) => {
     scale: 0;
   }
 
+  /* スマホは上がる幅を小さくする。指で動かしている最中に札が大きく動くと、スクロールが引っかかって見える */
   :global(.js) .item:not(.is-in) .item__card {
     opacity: 0;
-    translate: 0 64px;
+    translate: 0 24px;
+  }
+
+  @media (min-width: 900px) {
+    :global(.js) .item:not(.is-in) .item__card {
+      translate: 0 64px;
+    }
   }
 
   /* 点線は動かさず、丸が膨らんだあとに丸の側から札の側へ引く */
@@ -323,7 +335,7 @@ const pair = (item: string) => {
     display: grid;
     gap: 24px;
     margin-top: 8px;
-    padding: 24px;
+    padding: 20px 16px;
     border-radius: 16px;
     background: var(--surface);
     box-shadow: var(--float);
@@ -417,6 +429,10 @@ const pair = (item: string) => {
     .item[data-side='left'] .item__head,
     .item[data-side='left'] .item__tool {
       flex-direction: row-reverse;
+    }
+
+    .item__body {
+      padding: 24px;
     }
 
     .item[data-side='left'] .item__body {
