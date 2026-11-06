@@ -92,8 +92,15 @@ const svgOf = (icon?: string) => {
   }
 
   .chart__slot {
+    position: relative;
     animation: drop 1000ms both;
     animation-delay: calc(500ms + var(--i) * 110ms);
+  }
+
+  /* 指したアイコンの枠が、上や隣のアイコンの下に隠れないよう一番上に出す */
+  .chart__slot:hover,
+  .chart__slot:focus-within {
+    z-index: 3;
   }
 
   .chart__link {

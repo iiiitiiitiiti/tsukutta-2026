@@ -1,0 +1,156 @@
+---
+// アドベントカレンダーの前の日と次の日の記事。中身は src/data/advent.json に書く。
+// 担当者・題・リンクのどれかが空のうちは、押せない「準備中」の札として出す
+import advent from '../data/advent.json';
+
+interface Entry {
+  date: string;
+  author: string;
+  title: string;
+  url: string;
+}
+
+const sides = [
+  { key: 'prev', label: '前の日', entry: advent.prev as Entry },
+  { key: 'next', label: '次の日', entry: advent.next as Entry },
+];
+const dayOf = (iso: string) => {
+  const [, m, d] = iso.split('-').map(Number);
+  return { short: `${m}.${String(d).padStart(2, '0')}`, long: `${m}月${d}日` };
+};
+---
+<nav class="advent" aria-labelledby="advent-head">
+  <h2 class="advent__head" id="advent-head">アドベントカレンダーの前後の記事</h2>
+  <ul class="advent__list">
+    {sides.map(({ key, label, entry }) => {
+      const day = dayOf(entry.date);
+      const ready = entry.author && entry.title && entry.url;
+      const body = (
+        <>
+          <span class="advent__side">{label}</span>
+          <span class="advent__date"><span aria-hidden="true">{day.short}</span><span class="sr-only">{day.long}</span></span>
+          {ready ? (
+            <>
+              <span class="advent__title">{entry.title}</span>
+              <span class="advent__author">{entry.author}</span>
+            </>
+          ) : (
+            <span class="advent__title advent__title--wait">準備中</span>
+          )}
+        </>
+      );
+      return (
+        <li class={`advent__item advent__item--${key}`}>
+          {ready ? <a class="advent__card" href={entry.url}>{body}</a> : <div class="advent__card">{body}</div>}
+        </li>
+      );
+    })}
+  </ul>
+</nav>
+
+<style>
+  .advent {
+    width: min(100% - 40px, 960px);
+    margin: 0 auto;
+    padding: 72px 0 24px;
+  }
+
+  .advent__head {
+    margin: 0 0 20px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .advent__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .advent__card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      'side date'
+      'title title'
+      'author author';
+    align-items: baseline;
+    gap: 4px 12px;
+    height: 100%;
+    padding: 20px 22px;
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  /* 次の日は右側に置くので、中身も右へ寄せる */
+  .advent__item--next .advent__card {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'date side'
+      'title title'
+      'author author';
+    text-align: right;
+  }
+
+  .advent__item--next .advent__date {
+    justify-self: end;
+  }
+
+  a.advent__card {
+    transition: background-color 150ms, color 150ms;
+  }
+
+  a.advent__card:hover {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  div.advent__card {
+    border-style: dashed;
+    border-color: var(--ink-soft);
+  }
+
+  .advent__side {
+    grid-area: side;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .advent__date {
+    grid-area: date;
+    font-family: var(--num);
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .advent__title {
+    grid-area: title;
+    margin-top: 8px;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .advent__title--wait {
+    color: var(--ink-soft);
+  }
+
+  .advent__author {
+    grid-area: author;
+    font-size: 14px;
+  }
+
+  @media (max-width: 599px) {
+    .advent__list {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

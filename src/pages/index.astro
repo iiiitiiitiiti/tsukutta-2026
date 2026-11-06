@@ -10,6 +10,7 @@ import TimelineItem from '../components/TimelineItem.astro';
 import Shot from '../components/Shot.astro';
 import HeroShelf from '../components/HeroShelf.astro';
 import Finale from '../components/Finale.astro';
+import AdventNav from '../components/AdventNav.astro';
 
 type Extra = { id: string; match: string; icon?: string; lead?: string; counter?: { value: string; unit: string }; demo?: string; noShot?: boolean };
 type Entry = { date: string; month: number; day: number; title: string; paragraphs: string[]; hasImage: boolean; tools: string[] };
@@ -96,6 +97,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
       </section>
     ))}
     <Finale tools={shelf} />
+    <AdventNav />
     <footer class="foot"><span class="foot__end" aria-hidden="true"></span></footer>
   </body>
 </html>

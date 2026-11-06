@@ -112,10 +112,9 @@ const { value, unit, label } = Astro.props;
     const stagger = toMs(style.getPropertyValue('--stagger'));
     const easing = style.getPropertyValue('--ease').trim();
     const reels = build(root.querySelector<HTMLElement>('[data-roll]')!);
-    let animations: Animation[] = [];
-
+    // 帯の止まる位置: 20個並べた帯の (10 + 目当て) 番目。1個は帯の高さの5%
     const play = () => {
-      animations = reels.map(({ reel, target, index }) =>
+      reels.forEach(({ reel, target, index }) =>
         reel.animate([{ translate: '0 0' }, { translate: `0 ${-(10 + target) * 5}%` }], {
           duration: duration + index * stagger,
           easing,
@@ -123,20 +122,16 @@ const { value, unit, label } = Astro.props;
         }),
       );
     };
-    // 帯の止まる位置: 20個並べた帯の (10 + 目当て) 番目。1個は帯の高さの5%
-    const reset = () => {
-      animations.forEach((a) => a.cancel());
-      animations = [];
-    };
 
-    new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.intersectionRatio >= 0.6 && animations.length === 0) play();
-          if (e.intersectionRatio < 0.01) reset();
-        }
+    // 回るのは最初に画面へ入ったときだけ。外へ出て戻っても止まった数字のまま
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.intersectionRatio < 0.6) return;
+        io.disconnect();
+        play();
       },
-      { threshold: [0, 0.01, 0.6] },
-    ).observe(root);
+      { threshold: 0.6 },
+    );
+    io.observe(root);
   });
 </script>

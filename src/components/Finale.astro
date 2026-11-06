@@ -11,7 +11,7 @@ interface Props {
 }
 const { tools } = Astro.props;
 const credits = [
-  ['企画・注文', 'わたし'],
+  ['企画・注文', 'がーさん'],
   ['制作', 'Claude'],
   ['書体', 'Noto Sans JP／Oswald'],
   ['アイコン', 'Lucide'],
@@ -217,14 +217,17 @@ const credits = [
 
     // 止まる所は「おわり」の塊が枠の真ん中に来る位置
     const stopAt = () => frame.clientHeight / 2 - (end.offsetTop + end.offsetHeight / 2);
+    // 流し始めの位置。見出しが枠の下のほうに見えている所から始め、待ち時間を作らない
+    const startAt = () => frame.clientHeight * 0.72;
+    list.style.translate = `0 ${startAt()}px`;
 
     const play = () => {
       run?.cancel();
-      const fh = frame.clientHeight;
+      const start = startAt();
       const stop = stopAt();
-      run = list.animate([{ translate: `0 ${fh}px` }, { translate: `0 ${stop}px` }], {
-        duration: ((fh - stop) / SPEED) * 1000,
-        easing: 'cubic-bezier(0.3, 0, 0.2, 1)',
+      run = list.animate([{ translate: `0 ${start}px` }, { translate: `0 ${stop}px` }], {
+        duration: ((start - stop) / SPEED) * 1000,
+        easing: 'cubic-bezier(0.2, 0.25, 0.2, 1)',
         fill: 'forwards',
       });
       ctl.hidden = false;
@@ -234,6 +237,7 @@ const credits = [
 
     // 流し終えた後に画面の高さが変わったら、「おわり」の塊を枠の真ん中に置き直す
     window.addEventListener('resize', () => {
+      if (!run) list.style.translate = `0 ${startAt()}px`;
       if (run?.playState !== 'finished') return;
       run.cancel();
       run = list.animate([{ translate: `0 ${stopAt()}px` }], { duration: 0, fill: 'forwards' });
@@ -251,14 +255,14 @@ const credits = [
       }
     });
 
-    // 枠が4割ほど見えたら流し始める。一度流したら、あとはボタンで流し直す
+    // 枠が少しでも見えたら流し始める。一度流したら、あとはボタンで流し直す
     const io = new IntersectionObserver(
       ([e]) => {
         if (!e.isIntersecting) return;
         io.disconnect();
         play();
       },
-      { threshold: 0.35 },
+      { threshold: 0.15 },
     );
     io.observe(frame);
   }
