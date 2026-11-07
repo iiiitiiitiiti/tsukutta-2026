@@ -213,9 +213,10 @@ const items = [
     cursor: pointer;
   }
 
+  /* 赤の地に緑の線では差が約1.3:1で見えにくいので、白の線を内側に引く（赤との差 5.4:1） */
   .km__list :global(.swipe-delete:focus-visible) {
-    outline: 3px solid var(--accent);
-    outline-offset: -3px;
+    outline: 3px solid #fff;
+    outline-offset: -6px;
     box-shadow: none;
   }
 

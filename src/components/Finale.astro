@@ -243,15 +243,15 @@ const committee = ['ゆる民俗学・音楽学ラジオ 非公式', 'Advent Cal
   }
 
   /* スクリプトが動くときだけ、枠をブラウザの高さいっぱいにして中で流す。映画と同じく上下の端で切る */
-  :global(.js) .roll__frame {
+  :global(html.js:not(.roll-static)) .roll__frame {
     display: block;
     height: 100svh;
     padding: 0;
     overflow: hidden;
   }
 
-  :global(.js) .roll__list,
-  :global(.js) .roll__end {
+  :global(html.js:not(.roll-static)) .roll__list,
+  :global(html.js:not(.roll-static)) .roll__end {
     position: absolute;
     top: 0;
     right: 20px;
@@ -261,18 +261,18 @@ const committee = ['ゆる民俗学・音楽学ラジオ 非公式', 'Advent Cal
   }
 
   /* 流し始めるまでは何も見せない。最初の位置はスクリプトが入れる */
-  :global(.js) .roll__head,
-  :global(.js) .roll__fin {
+  :global(html.js:not(.roll-static)) .roll__head,
+  :global(html.js:not(.roll-static)) .roll__fin {
     opacity: 0;
   }
 
-  :global(.js) .roll__list {
+  :global(html.js:not(.roll-static)) .roll__list {
     width: auto;
     max-width: 720px;
     translate: 0 100svh;
   }
 
-  :global(.js) .roll__end {
+  :global(html.js:not(.roll-static)) .roll__end {
     translate: 0 200svh;
   }
 
@@ -368,7 +368,7 @@ const committee = ['ゆる民俗学・音楽学ラジオ 非公式', 'Advent Cal
 
     const finished = () => runs.length > 0 && runs.every((a) => a.playState === 'finished');
 
-    const play = () => {
+    const play = (at = 0, paused = false) => {
       runs.forEach((a) => a.cancel());
       const { listStart, listOut, endStart, endStop } = measure();
       pose(listStart, endStart, false);
@@ -391,20 +391,33 @@ const committee = ['ゆる民俗学・音楽学ラジオ 非公式', 'Advent Cal
         ),
         fin.animate([{ opacity: 0 }, { opacity: 1 }], { delay: lead + endTime + 600, duration: 900, fill: 'forwards' }),
       ];
+      runs.forEach((a) => {
+        a.currentTime = at;
+        // 終わった動きを止めると、続きを流すときに頭から再生し直すので、まだ終わっていないものだけ止める
+        if (paused && at < Number(a.effect!.getComputedTiming().endTime)) a.pause();
+      });
       ctl.hidden = false;
-      ctl.textContent = '止める';
+      ctl.textContent = paused ? '続きを流す' : '止める';
       Promise.all(runs.map((a) => a.finished))
         .then(() => (ctl.textContent = 'もう一度流す'))
         .catch(() => {});
     };
 
-    // 画面の高さが変わったら置き直す。流し終えた後なら、締めの札を枠の真ん中に置き直す
+    // 枠の大きさが変わったら置き直す。流している途中や止めている間は、経った時間を保ったまま測り直して流し直す。
+    // 流し終えた後なら、締めの札を枠の真ん中に置き直す
+    let size = '';
     const relayout = () => {
+      const now = `${frame.clientWidth}x${frame.clientHeight}`;
+      if (now === size) return;
+      size = now;
       if (!played) {
         const { listStart, endStart } = measure();
         return pose(listStart, endStart, false);
       }
-      if (runs.length > 0 && !finished()) return;
+      if (runs.length > 0 && !finished()) {
+        const live = runs.filter((a) => a.playState !== 'finished');
+        return play(Number(runs[1].currentTime) || 0, live.some((a) => a.playState === 'paused'));
+      }
       runs.forEach((a) => a.cancel());
       runs = [];
       const { listOut, endStop } = measure();
@@ -439,4 +452,6 @@ const committee = ['ゆる民俗学・音楽学ラジオ 非公式', 'Advent Cal
     );
     io.observe(frame);
   }
+  // 準備が済んだ印。ページの頭の見張りは、これが無ければエンドロールを並べた形で出す
+  document.documentElement.classList.add('ok-roll');
 </script>

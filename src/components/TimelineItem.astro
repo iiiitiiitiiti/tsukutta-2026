@@ -488,6 +488,8 @@ const pair = (item: string) => {
     { rootMargin: '0px 0px -10% 0px' },
   );
   document.querySelectorAll('[data-reveal]').forEach((el) => seen.observe(el));
+  // 準備が済んだ印。ページの頭の見張りは、これが無ければ項目を全部出す
+  document.documentElement.classList.add('ok-reveal');
 
   // 「くわしく読む」の開閉。高さを伸び縮みさせ、開くときは中身を順に浮かばせる。
   // details の素の開閉は一瞬で切り替わるので、押されたら止めて自分で動かす

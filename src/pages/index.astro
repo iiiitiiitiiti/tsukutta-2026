@@ -60,7 +60,20 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     <meta property="og:description" content={description} />
     <meta property="og:type" content="article" />
     <meta name="theme-color" content="#ffffff" />
-    <script is:inline>document.documentElement.classList.add('js');</script>
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      // 動きのスクリプトが読めなかったり途中で止まったりしたら、隠したままにせず中身を出す
+      addEventListener('load', () => {
+        const html = document.documentElement;
+        if (!html.classList.contains('ok-reveal')) {
+          document.querySelectorAll('[data-reveal]').forEach((el) => el.classList.add('is-in'));
+        }
+        if (!html.classList.contains('ok-roll')) {
+          html.classList.add('roll-static');
+          document.querySelectorAll('[data-endroll] [style]').forEach((el) => el.removeAttribute('style'));
+        }
+      });
+    </script>
   </head>
   <body id="top">
     {/* 上の月の帯はこの囲みの中だけで付いてくる。締めのエンドロールに入る手前で止まる */}
