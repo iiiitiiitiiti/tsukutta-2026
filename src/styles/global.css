@@ -16,7 +16,8 @@
   --ci: var(--ink);
   --on-c: var(--ink);
 
-  --num: 'Oswald', 'Arial Narrow', sans-serif;
+  /* 数字は Oswald。Oswald に無い字（日付の「月」「日」など）は本文と同じ書体で出す。書かないと、見る人の端末の文字になる */
+  --num: 'Oswald', 'Arial Narrow', 'PageJP', 'Noto Sans JP Variable', 'Noto Sans JP', sans-serif;
   /* PageJP はこのページに出てくる字だけを入れた1ファイル（定義は index.astro の head）。そこに無い字（入力欄に打たれた字など）だけ、後ろの Noto Sans JP が字ごとの小さなファイルで届く */
   --body: 'PageJP', 'Noto Sans JP Variable', 'Noto Sans JP', sans-serif;
 
