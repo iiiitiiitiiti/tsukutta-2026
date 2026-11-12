@@ -28,6 +28,20 @@ npm run import -- <パス>  # 別の場所の原稿を読む
 
 `public/shots/<extras の id>.webp`（あれば同名の `.avif` も）を置くと、全文の中の準備中の枠が写真に替わる。年表の丸い小窓はアイコンのまま。冒頭の棚の画像は `tana-overview`。写真は押すと画面いっぱいに大きく出る（`src/components/ShotZoom.astro`）。狭い画面では横にはみ出す大きさで出し、横に動かして見る。
 
+## 日本語のフォント
+
+日本語の字は、このページに出てくる字だけを入れた1ファイル `src/assets/fonts/page-jp.woff2`（約185KB）で出す。Noto Sans JP の全部の字から、ビルド結果に出てくる字と、かな・英数字・約物だけを抜き出したもの。
+
+本文・項目・アドベントカレンダーの題名などを直して新しい字が増えると、`npm run build` が「入っていない字があります」と出して止まる。そのときは次を実行し、`src/assets/fonts/` の2ファイル（`page-jp.woff2` と、入っている字の一覧 `page-jp.json`）をコミットする。
+
+```sh
+npm run font
+```
+
+初めて実行する機械では、元のフォント（約10MB）を google/fonts の GitHub から取って `.cache/fonts/` に置く（コミットしない）。取るコミットと SHA-256 は `scripts/page-font.mjs` に固定してある。
+
+入力欄に打たれた字など `page-jp.woff2` に無い字は、これまでどおり `@fontsource-variable/noto-sans-jp` の小分けのファイルがその字のぶんだけ届く。決めた経緯は `docs/decisions/019_page-font.md`。
+
 ## 共有したときのカード画像
 
 `public/og.png`（1200×630）は表紙の年・題・棒グラフを撮ったもの。12月の節を足すなど棒グラフが変わったら撮り直す。撮り方は `docs/decisions/018_quality-pass.md` に書いた。ブラウザのタブに出る絵は `public/favicon.svg`。
@@ -38,7 +52,7 @@ npm run import -- <パス>  # 別の場所の原稿を読む
 npm ci
 npm run dev      # http://localhost:4321/tsukutta-2026/
 npm run check
-npm run build
+npm run build    # 最後に、ページの字がフォントに全部入っているかを確かめる
 ```
 
 ## アクセシビリティの検査

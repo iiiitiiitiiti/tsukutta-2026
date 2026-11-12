@@ -17,7 +17,8 @@
   --on-c: var(--ink);
 
   --num: 'Oswald', 'Arial Narrow', sans-serif;
-  --body: 'Noto Sans JP Variable', 'Noto Sans JP', sans-serif;
+  /* PageJP はこのページに出てくる字だけを入れた1ファイル（定義は index.astro の head）。そこに無い字（入力欄に打たれた字など）だけ、後ろの Noto Sans JP が字ごとの小さなファイルで届く */
+  --body: 'PageJP', 'Noto Sans JP Variable', 'Noto Sans JP', sans-serif;
 
   color-scheme: light;
 }

@@ -5,11 +5,12 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && node scripts/page-font.mjs --check",
     "preview": "astro preview",
     "check": "astro check",
     "check:contrast": "node scripts/check-contrast.mjs",
     "import": "node scripts/import-text.mjs",
+    "font": "node scripts/page-font.mjs",
     "astro": "astro"
   },
   "dependencies": {
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@types/node": "^26.6.6",
+    "subset-font": "^2.9.0",
     "typescript": "^5.9.3"
   }
 }

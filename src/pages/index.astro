@@ -3,6 +3,7 @@ import '@fontsource/oswald/500.css';
 import '@fontsource/oswald/600.css';
 import notoCss from '@fontsource-variable/noto-sans-jp/wght.css?url';
 import oswald600 from '@fontsource/oswald/files/oswald-latin-600-normal.woff2?url';
+import pageJp from '../assets/fonts/page-jp.woff2?url';
 import '../styles/global.css';
 import timeline from '../data/timeline.json';
 import extrasList from '../data/extras.json';
@@ -72,8 +73,11 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     <link rel="canonical" href={pageUrl} />
     <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
     <link rel="preload" href={oswald600} as="font" type="font/woff2" crossorigin />
-    {/* 日本語の文字の定義は大きいので、画面を出すのを待たせずに後から読む。届くまでは端末の文字で出る */}
-    <link rel="stylesheet" href={notoCss} media="print" onload="this.removeAttribute('media')" />
+    <link rel="preload" href={pageJp} as="font" type="font/woff2" crossorigin />
+    {/* PageJP の定義は、すぐ下の link より前に置く。本体の CSS は head の最後に差し込まれるので、そこに書くと下の onload が PageJP を知る前に走る */}
+    <style is:inline set:html={`@font-face{font-family:'PageJP';font-style:normal;font-weight:100 900;font-display:swap;src:url(${pageJp}) format('woff2')}`} />
+    {/* PageJP に無い字のための定義（約120個）。PageJP が届いてから効かせる。届く前に効かせると、待つあいだの代わりの字としてこちらのファイルを何十個も取りに行くブラウザがありうる（Chrome は取りに行かない） */}
+    <link rel="stylesheet" href={notoCss} media="print" onload="document.fonts.load('1em PageJP').finally(() => this.removeAttribute('media'))" />
     <noscript><link rel="stylesheet" href={notoCss} /></noscript>
     <meta name="theme-color" content="#ffffff" />
     <script is:inline>
