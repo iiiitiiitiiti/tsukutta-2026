@@ -207,9 +207,13 @@ p + p {
   }
 }
 
+/* 序文は何行も続くので左にそろえる。中央にそろえると、段落の最後の行だけが真ん中に浮く */
 .hero__body {
   grid-area: body;
+  max-width: 40em;
+  margin-inline: auto;
   color: var(--ink-body);
+  text-align: left;
 }
 
 /* 地の文の節（自己紹介・おわりに）。長い文を読む所なので、表紙や年表より狭くする */

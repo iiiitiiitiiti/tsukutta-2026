@@ -803,7 +803,7 @@ const cards = [
     let lastWidth = 0;
     const fit = () => {
       const width = scene.clientWidth;
-      if (!width || width === lastWidth || study.hidden || !root.checkVisibility()) return;
+      if (!width || width === lastWidth || study.hidden || root.checkVisibility?.() === false) return;
       lastWidth = width;
       root.style.height = '';
       const probe = back.cloneNode(true) as HTMLElement;
@@ -828,10 +828,13 @@ const cards = [
     };
     new ResizeObserver(fit).observe(root);
     root.closest('details')?.addEventListener('toggle', fit);
-    document.fonts?.ready.then(() => {
+    // 文字のファイルは、その字が初めて画面に出たときに届く。届くと折り返しが変わりうるので測り直す
+    const refit = () => {
       lastWidth = 0;
       fit();
-    });
+    };
+    document.fonts?.ready.then(refit);
+    document.fonts?.addEventListener?.('loadingdone', refit);
 
     start(cards, true);
     scene.classList.remove('is-enter');

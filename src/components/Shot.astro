@@ -1,9 +1,11 @@
 ---
 // スクショ。丸い小窓（thumb）と、全文の中の大きな1枚（full）の2つの出し方がある。
 // 丸い小窓はスクショがあっても常にアイコンを出す（表紙の棚と同じ絵で、どれのことか一目で分かるように）。
-// 大きな1枚は public/shots/<id>.webp が無いあいだ準備中の枠になる
+// 大きな1枚は public/shots/<id>.webp が無いあいだ準備中の枠になる。あれば、押すと大きく見られる（ShotZoom.astro）
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { imageMetadata } from 'astro/assets/utils';
+import { iconSvg } from '../lib/icon';
 
 interface Props {
   id: string;
@@ -16,8 +18,9 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const shots = resolve(process.cwd(), 'public/shots');
 const hasWebp = existsSync(resolve(shots, `${id}.webp`));
 const hasAvif = existsSync(resolve(shots, `${id}.avif`));
-const iconPath = icon ? resolve(process.cwd(), 'node_modules/lucide-static/icons', `${icon}.svg`) : '';
-const svg = iconPath && existsSync(iconPath) ? readFileSync(iconPath, 'utf8').replace(/<!--[\s\S]*?-->/g, '') : '';
+const svg = iconSvg(icon);
+// 画像の縦横を先に書いておく。書かないと、読み込みが済んだときに下の中身が押し下げられる
+const size = variant === 'full' && hasWebp ? await imageMetadata(readFileSync(resolve(shots, `${id}.webp`))) : null;
 const src = `${base}/shots/${id}`;
 ---
 {variant === 'thumb' ? (
@@ -26,7 +29,14 @@ const src = `${base}/shots/${id}`;
   </span>
 ) : (
   <figure class="full">
-    {hasWebp ? <picture>{hasAvif && <source srcset={`${src}.avif`} type="image/avif" />}<img src={`${src}.webp`} alt={alt} loading="lazy" decoding="async" /></picture> : <div class="full__empty">画像を準備中</div>}
+    {hasWebp ? (
+      <a class="full__zoom" href={`${src}.webp`} aria-label={`${alt}を大きく見る`} data-zoom>
+        <picture>{hasAvif && <source srcset={`${src}.avif`} type="image/avif" />}<img src={`${src}.webp`} alt={alt} width={size?.width} height={size?.height} loading="lazy" decoding="async" /></picture>
+        <span class="full__badge" aria-hidden="true" set:html={iconSvg('maximize-2')} />
+      </a>
+    ) : (
+      <div class="full__empty">画像を準備中</div>
+    )}
     <figcaption class="full__caption">{alt}</figcaption>
   </figure>
 )}
@@ -74,6 +84,40 @@ const src = `${base}/shots/${id}`;
   .full__empty {
     border-radius: 10px;
     box-shadow: 0 0 0 1px var(--rule);
+  }
+
+  .full__zoom {
+    display: block;
+    position: relative;
+    border-radius: 10px;
+    cursor: zoom-in;
+  }
+
+  .full__badge {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: var(--float);
+    color: var(--ink);
+    transition: scale 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .full__badge :global(svg) {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.25;
+  }
+
+  @media (hover: hover) {
+    .full__zoom:hover .full__badge {
+      scale: 1.12;
+    }
   }
 
   .full__empty {

@@ -1,0 +1,125 @@
+---
+// スクショを画面いっぱいに大きく見る窓。ページに1つだけ置き、押されたスクショを中に入れて開く。
+// 年表の中のスクショは幅が狭く、画面の中の文字が読めないため。
+// スクリプトが動かないときは、スクショのリンクがそのまま画像を開く
+import { iconSvg } from '../lib/icon';
+---
+<dialog class="zoom" aria-label="大きく見る" data-zoom-box>
+  <div class="zoom__pan" data-zoom-pan>
+    <img class="zoom__img" alt="" data-zoom-img />
+  </div>
+  <form method="dialog">
+    <button class="zoom__close"><span class="zoom__x" aria-hidden="true" set:html={iconSvg('x')} />閉じる</button>
+  </form>
+</dialog>
+
+<style>
+  .zoom {
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgb(20 25 35 / 0.94);
+    overflow: hidden;
+  }
+
+  .zoom::backdrop {
+    background: none;
+  }
+
+  /* 画像が画面より大きいときは、この中を縦横に動かして見る。動かしても後ろのページは動かさない */
+  .zoom__pan {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    padding: 72px 16px 16px;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* 狭い画面では、画面の幅に合わせると小さいままなので、横にはみ出す大きさで出して横に動かして見る */
+  .zoom__img {
+    flex: none;
+    width: max(100%, 720px);
+    max-width: none;
+    margin: auto;
+    border-radius: 8px;
+    cursor: zoom-out;
+  }
+
+  @media (min-width: 900px) {
+    .zoom__pan {
+      padding: 72px 24px 24px;
+    }
+
+    .zoom__img {
+      width: auto;
+      max-width: min(100%, 1280px);
+      max-height: calc(100dvh - 96px);
+    }
+  }
+
+  .zoom__close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 18px 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .zoom__close:focus-visible {
+    outline-color: #fff;
+  }
+
+  .zoom__x {
+    display: grid;
+    width: 18px;
+  }
+
+  .zoom__x :global(svg) {
+    width: 100%;
+    height: auto;
+    stroke-width: 2.25;
+  }
+</style>
+
+<script>
+  const box = document.querySelector<HTMLDialogElement>('[data-zoom-box]');
+  if (box && typeof box.showModal === 'function') {
+    const big = box.querySelector<HTMLImageElement>('[data-zoom-img]')!;
+    const pan = box.querySelector<HTMLElement>('[data-zoom-pan]')!;
+    document.addEventListener('click', (ev) => {
+      const link = (ev.target as Element).closest<HTMLAnchorElement>('a[data-zoom]');
+      // 別のタブで開く押し方（Ctrl・Shift・⌘ を押しながら）は、ブラウザに任せる
+      if (!link || ev.ctrlKey || ev.metaKey || ev.shiftKey) return;
+      ev.preventDefault();
+      const small = link.querySelector('img')!;
+      // 縦横の比を先に渡す。画像が届く前から同じ形の場所が取れる
+      big.setAttribute('width', small.getAttribute('width') ?? '');
+      big.setAttribute('height', small.getAttribute('height') ?? '');
+      big.alt = small.alt;
+      big.src = link.href;
+      box.showModal();
+      pan.scrollTo(0, 0);
+      box.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' });
+    });
+    box.addEventListener('click', (ev) => {
+      if (!(ev.target as Element).closest('button')) box.close();
+    });
+  }
+</script>

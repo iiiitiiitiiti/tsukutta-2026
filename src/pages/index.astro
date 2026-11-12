@@ -1,7 +1,8 @@
 ---
 import '@fontsource/oswald/500.css';
 import '@fontsource/oswald/600.css';
-import '@fontsource-variable/noto-sans-jp';
+import notoCss from '@fontsource-variable/noto-sans-jp/wght.css?url';
+import oswald600 from '@fontsource/oswald/files/oswald-latin-600-normal.woff2?url';
 import '../styles/global.css';
 import timeline from '../data/timeline.json';
 import extrasList from '../data/extras.json';
@@ -11,9 +12,9 @@ import Shot from '../components/Shot.astro';
 import HeroShelf from '../components/HeroShelf.astro';
 import Finale from '../components/Finale.astro';
 import AdventNav from '../components/AdventNav.astro';
+import ShotZoom from '../components/ShotZoom.astro';
 import advent from '../data/advent.json';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { iconSvg } from '../lib/icon';
 
 type Extra = { id: string; match: string; icon?: string; lead?: string; counter?: { value: string; unit: string }; demo?: string; noShot?: boolean };
 type Entry = { date: string; month: number; day: number; title: string; paragraphs: string[]; hasImage: boolean; tools: string[] };
@@ -46,7 +47,10 @@ const nextLabel = lastShown < 12 ? `${lastShown + 1}` : '2027';
 const nextText = lastShown < 12 ? `${lastShown + 1}月へつづく` : '来年へつづく';
 // この記事が入っているアドベントカレンダーの企画。表紙の題の下に一言で出す
 const mine = advent.calendars.find((c) => 'mine' in c && c.mine)!;
-const arrowUp = readFileSync(resolve(process.cwd(), 'node_modules/lucide-static/icons/arrow-up.svg'), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+const arrowUp = iconSvg('arrow-up');
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const pageUrl = new URL(`${base}/`, Astro.site).href;
+const ogImage = new URL(`${base}/og.png`, Astro.site).href;
 const description = `Webデザイナーが今年AIに頼んで作ったアプリやページ${total}件を、作った日の順に並べた年表。`;
 ---
 <!doctype html>
@@ -59,6 +63,18 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
     <meta property="og:title" content={timeline.title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="article" />
+    <meta property="og:url" content={pageUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="canonical" href={pageUrl} />
+    <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
+    <link rel="preload" href={oswald600} as="font" type="font/woff2" crossorigin />
+    {/* 日本語の文字の定義は大きいので、画面を出すのを待たせずに後から読む。届くまでは端末の文字で出る */}
+    <link rel="stylesheet" href={notoCss} media="print" onload="this.removeAttribute('media')" />
+    <noscript><link rel="stylesheet" href={notoCss} /></noscript>
     <meta name="theme-color" content="#ffffff" />
     <script is:inline>
       document.documentElement.classList.add('js');
@@ -93,6 +109,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
       {intro.hasImage && <div class="cover-shot"><Shot id="tana-overview" alt="つくったもの棚の画面" variant="full" /></div>}
     </header>
 
+    <main>
     {(before as TextSection[]).map((s) => (
       <section class="note">
         <h2 class="note__head">{s.heading}</h2>
@@ -100,7 +117,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
       </section>
     ))}
 
-    <main class="tl">
+    <div class="tl">
       {monthSections.map((s, i) => (
         <section class="tl-month" id={`m${s.month}`} data-month={s.month} data-single={s.entries.length === 1} aria-labelledby={`mh${s.month}`} style={`--c-next: ${monthSections[i + 1] ? `var(--b${monthSections[i + 1].month})` : 'var(--bg)'}`}>
           <div class="tl-month__inner">
@@ -123,7 +140,7 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
           </p>
         </div>
       </div>
-    </main>
+    </div>
 
     {(after as TextSection[]).map((s) => (
       <section class="note">
@@ -131,12 +148,14 @@ const description = `Webデザイナーが今年AIに頼んで作ったアプリ
         <div class="note__body">{s.paragraphs.map((p) => <p>{p}</p>)}</div>
       </section>
     ))}
+    </main>
     </div>
     <Finale tools={shelf} />
     <AdventNav />
     <footer class="foot">
       <a class="foot__top" href="#top"><span class="foot__icon" aria-hidden="true" set:html={arrowUp} />上に戻る</a>
     </footer>
+    <ShotZoom />
   </body>
 </html>
 

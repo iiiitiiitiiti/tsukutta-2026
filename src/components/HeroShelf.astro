@@ -1,10 +1,9 @@
 ---
-// 表紙の棚。18作のアイコンが作った順に上から落ちてきて、月の列に積み上がる。
+// 表紙の棚。作ったもののアイコンが作った順に上から落ちてきて、月の列に積み上がる。
 // 積み上がった高さがそのまま月ごとの作った数の棒グラフになる。
 // アイコンは年表のその項目へ、月の数字はその月の帯へのリンクで、目次も兼ねる。
 // 名前は吹き出しにせず、グラフ左上の空いた所に出す。吹き出しだと隣の列のアイコンに重なって読めなくなるため
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { iconSvg } from '../lib/icon';
 
 interface Tool {
   id: string;
@@ -22,10 +21,6 @@ const { tools } = Astro.props;
 const last = Math.max(11, ...tools.map((t) => t.month));
 const months = Array.from({ length: last - 3 }, (_, i) => i + 4);
 const max = Math.max(...months.map((m) => tools.filter((t) => t.month === m).length));
-const svgOf = (icon?: string) => {
-  const p = icon ? resolve(process.cwd(), 'node_modules/lucide-static/icons', `${icon}.svg`) : '';
-  return p && existsSync(p) ? readFileSync(p, 'utf8').replace(/<!--[\s\S]*?-->/g, '') : '';
-};
 ---
 <nav class="chart" aria-label={`月ごとに作った数。全部で${tools.length}こ`} style={`--max: ${max}; --cols: ${months.length}`} data-chart>
   <p class="chart__caption" aria-hidden="true" data-caption><span class="chart__cap-date" data-cap-date></span><span class="chart__cap-name" data-cap-name></span></p>
@@ -38,7 +33,7 @@ const svgOf = (icon?: string) => {
             {list.map((t) => (
               <li class="chart__slot" style={`--i: ${tools.indexOf(t)}; --r: ${((tools.indexOf(t) * 37) % 50) - 25}deg`}>
                 <a class="chart__link" href={`#${t.anchor}`} data-date={`${m}.${String(t.day).padStart(2, '0')}`} data-name={t.name}>
-                  <span class="chart__icon" aria-hidden="true" set:html={svgOf(t.icon)} />
+                  <span class="chart__icon" aria-hidden="true" set:html={iconSvg(t.icon)} />
                   <span class="sr-only">{t.name}（{m}月{t.day}日）</span>
                 </a>
               </li>
