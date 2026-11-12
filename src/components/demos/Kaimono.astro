@@ -82,8 +82,11 @@ const items = [
     box-shadow: var(--focus);
   }
 
+  /* 品名の行や「消す」はあとから作られるので、:global を付けないと届かず、ボタンだけ端末の文字になる */
   .km button,
-  .km input {
+  .km input,
+  .km :global(button),
+  .km :global(input) {
     font: inherit;
     color: inherit;
   }

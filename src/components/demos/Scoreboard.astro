@@ -8,7 +8,7 @@ const N = 2;
 ---
 <div class="qs" data-qs data-m={M} data-n={N}>
   <div class="qs__bar">
-    <span class="qs__rule">ルール: {M}○{N}✕</span>
+    <span class="qs__rule">ルール: {M}○{N}×</span>
     <button type="button" class="qs__tool qs__tool--sort" data-sort aria-pressed="false">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 16 4 4 4-4" /><path d="M7 20V4" /><path d="m21 8-4-4-4 4" /><path d="M17 4v16" /></svg>
       <span data-sort-label>得点順</span>
@@ -32,11 +32,11 @@ const N = 2;
         <p class="qs__name" data-name>{name}</p>
         <div class="qs__score" aria-hidden="true">
           <span class="qs__line"><span class="qs__mk qs__ok">○</span><span class="qs__num qs__ok" data-c>0</span><span class="qs__max qs__ok-dim">/{M}</span></span>
-          <span class="qs__line"><span class="qs__mk qs__ng">✕</span><span class="qs__num qs__ng" data-w>0</span><span class="qs__max qs__ng-dim">/{N}</span></span>
+          <span class="qs__line"><span class="qs__mk qs__ng">×</span><span class="qs__num qs__ng" data-w>0</span><span class="qs__max qs__ng-dim">/{N}</span></span>
         </div>
         <div class="qs__buttons">
           <button type="button" class="qs__btn qs__btn--ok" data-hit="correct" aria-label={`${name} に○`}>○</button>
-          <button type="button" class="qs__btn qs__btn--ng" data-hit="wrong" aria-label={`${name} に✕`}>✕</button>
+          <button type="button" class="qs__btn qs__btn--ng" data-hit="wrong" aria-label={`${name} に✕`}>×</button>
         </div>
       </li>
     ))}
@@ -691,7 +691,7 @@ const N = 2;
       p.card.querySelector<HTMLButtonElement>('[data-trophy]')!.addEventListener('click', (e) => {
         opener = e.currentTarget as HTMLElement;
         root.querySelector('[data-win-name]')!.textContent = p.name;
-        root.querySelector('[data-win-score]')!.textContent = `○ ${p.correct}  ✕ ${p.wrong}`;
+        root.querySelector('[data-win-score]')!.textContent = `○ ${p.correct}  × ${p.wrong}`;
         win.hidden = false;
         // それでも札が枠より高いときは、閉じるまで枠を伸ばす
         const need = win.querySelector<HTMLElement>('.qs__win-card')!.offsetHeight + 32;
