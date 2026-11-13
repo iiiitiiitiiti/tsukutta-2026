@@ -17,5 +17,6 @@
   { "id": "tsukutta-tana", "match": "つくったもの棚", "icon": "library", "lead": "作ったものを種類ごとに並べたページ" },
   { "id": "visual-quiz-slides", "match": "ビジュアルクイズのスライド", "icon": "presentation", "lead": "画像や文字で見せるクイズを、大画面で出題するスライド集" },
   { "id": "kaimono", "match": "かいもの", "icon": "shopping-cart", "lead": "複数人で同じ買い物リストを見て、足して、チェックするアプリ", "demo": "kaimono" },
-  { "id": "formation", "match": "フォーメーション帳", "icon": "users-round", "lead": "フラのステージで踊る立ち位置を、場面ごとに決めるアプリ" }
+  { "id": "formation", "match": "フォーメーション帳", "icon": "users-round", "lead": "フラのステージで踊る立ち位置を、場面ごとに決めるアプリ" },
+  { "id": "unchiku-netacho", "match": "うんちくネタ帳", "icon": "lightbulb", "lead": "クイズのネタになるうんちくをためておく帳面" }
 ]
