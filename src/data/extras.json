@@ -19,5 +19,6 @@
   { "id": "kaimono", "match": "かいもの", "icon": "shopping-cart", "lead": "複数人で同じ買い物リストを見て、足して、チェックするアプリ", "demo": "kaimono" },
   { "id": "formation", "match": "フォーメーション帳", "icon": "users-round", "lead": "フラのステージで踊る立ち位置を、場面ごとに決めるアプリ" },
   { "id": "ryoko-shiori", "match": "旅行のしおり", "icon": "car", "lead": "時間割・行き先・天気を1枚にまとめた、日帰りドライブのしおり" },
-  { "id": "unchiku-netacho", "match": "うんちくネタ帳", "icon": "lightbulb", "lead": "クイズのネタになるうんちくをためておく帳面" }
+  { "id": "unchiku-netacho", "match": "うんちくネタ帳", "icon": "lightbulb", "lead": "クイズのネタになるうんちくをためておく帳面" },
+  { "id": "recipe-book", "match": "レシピ帳", "icon": "chef-hat", "lead": "料理をしながら見る、料理本のような見た目のレシピ帳" }
 ]
